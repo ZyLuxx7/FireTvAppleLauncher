@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dreamRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+
+    <ImageView
+        android:id="@+id/dreamBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0"
+        android:scaleType="centerCrop" />
+
+    <View
+        android:id="@+id/dreamBackgroundShade"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0"
+        android:background="@drawable/now_playing_backdrop_shade" />
+
+    <View
+        android:id="@+id/dreamAmbient"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/dreamHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="56dp"
+        android:layout_marginTop="42dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextClock
+            android:id="@+id/dreamClock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:format12Hour="h:mm"
+            android:format24Hour="HH:mm"
+            android:includeFontPadding="false"
+            android:shadowColor="#99000000"
+            android:shadowDy="1"
+            android:shadowRadius="6"
+            android:textColor="#F2FFFFFF"
+            android:textSize="13sp" />
+
+        <TextClock
+            android:id="@+id/dreamDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:fontFamily="sans-serif-medium"
+            android:format12Hour="@string/date_format_home"
+            android:format24Hour="@string/date_format_home"
+            android:includeFontPadding="false"
+            android:maxLines="2"
+            android:shadowColor="#99000000"
+            android:shadowDy="1"
+            android:shadowRadius="6"
+            android:textColor="#E6FFFFFF"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/dreamGreeting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:fontFamily="sans-serif-medium"
+            android:includeFontPadding="false"
+            android:shadowColor="#99000000"
+            android:shadowDy="1"
+            android:shadowRadius="6"
+            android:textColor="#E6FFFFFF"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/dreamClockPanel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="54dp"
+        android:layout_marginEnd="64dp"
+        android:alpha="0"
+        android:background="@drawable/dream_clock_glass"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:paddingStart="26dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="26dp"
+        android:paddingBottom="18dp">
+
+        <TextView
+            android:id="@+id/dreamGreeting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:alpha="0.82"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="#E6FFFFFF"
+            android:textSize="18sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextClock
+                android:id="@+id/dreamClock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:format12Hour="h:mm"
+                android:format24Hour="HH:mm"
+                android:includeFontPadding="false"
+                android:letterSpacing="-0.03"
+                android:shadowColor="#73000000"
+                android:shadowDy="2"
+                android:shadowRadius="10"
+                android:textColor="#F2FFFFFF"
+                android:textSize="72sp" />
+
+            <TextClock
+                android:id="@+id/dreamAmPm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:fontFamily="sans-serif-medium"
+                android:format12Hour="a"
+                android:format24Hour=""
+                android:shadowColor="#73000000"
+                android:shadowDy="1"
+                android:shadowRadius="6"
+                android:textColor="#BFFFFFFF"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <TextClock
+            android:id="@+id/dreamDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="4dp"
+            android:fontFamily="sans-serif-medium"
+            android:format12Hour="@string/date_format"
+            android:format24Hour="@string/date_format"
+            android:shadowColor="#73000000"
+            android:shadowDy="1"
+            android:shadowRadius="6"
+            android:textColor="#D9FFFFFF"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/dreamPlayerPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="72dp"
+        android:layout_marginEnd="72dp"
+        android:alpha="0"
+        android:background="@drawable/dream_player_glass"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="28dp"
+        android:visibility="gone">
+
+        <FrameLayout
+            android:layout_width="340dp"
+            android:layout_height="340dp"
+            android:background="@drawable/tile_bg"
+            android:clipToOutline="true">
+
+            <ImageView
+                android:id="@+id/dreamPlayerArtwork"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="36dp"
+            android:layout_marginEnd="224dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/dreamPlayerTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-bold"
+                android:maxLines="2"
+                android:textColor="#FFFFFFFF"
+                android:textSize="34sp" />
+
+            <TextView
+                android:id="@+id/dreamPlayerArtist"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:textColor="#E6FFFFFF"
+                android:textSize="24sp" />
+
+            <TextView
+                android:id="@+id/dreamPlayerAlbum"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#BFFFFFFF"
+                android:textSize="18sp"
+                android:visibility="gone" />
+
+            <ProgressBar
+                android:id="@+id/dreamPlayerProgress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="5dp"
+                android:layout_marginTop="30dp"
+                android:max="1000"
+                android:progressBackgroundTint="#66FFFFFF"
+                android:progressTint="#F2FFFFFF" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

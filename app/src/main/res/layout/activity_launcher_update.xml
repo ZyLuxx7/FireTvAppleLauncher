@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/settings_backdrop">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#46000000" />
+
+    <TextView
+        android:id="@+id/launcherUpdateBack"
+        style="@style/SettingsRow"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="42dp"
+        android:layout_marginTop="30dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:text="@string/launcher_update_done" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="88dp"
+        android:layout_marginEnd="88dp"
+        android:background="@drawable/glass_panel"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="30dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/launcherUpdateTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-bold"
+                android:text="@string/launcher_update_title"
+                android:textColor="#FFFFFFFF"
+                android:textSize="28sp" />
+
+            <TextView
+                android:id="@+id/launcherUpdateDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:lineSpacingExtra="3sp"
+                android:text="@string/launcher_update_description"
+                android:textColor="#D9FFFFFF"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/launcherUpdatePin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.08"
+                android:textColor="#FFFFFFFF"
+                android:textSize="25sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/launcherUpdateAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:textColor="#CFFFFFFF"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/launcherUpdatePhoneHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="7dp"
+                android:lineSpacingExtra="2sp"
+                android:text="@string/launcher_update_phone_hint"
+                android:textColor="#BFFFFFFF"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/launcherUpdateStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:lineSpacingExtra="3sp"
+                android:textColor="#FFFFFFFF"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/launcherUpdateAllowSources"
+                style="@style/SettingsRow"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="14dp"
+                android:gravity="center"
+                android:text="@string/launcher_update_install_source_action"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/launcherUpdateNewSession"
+                style="@style/SettingsRow"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="14dp"
+                android:gravity="center"
+                android:text="@string/launcher_update_new_session"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/launcherUpdateQr"
+            android:layout_width="260dp"
+            android:layout_height="260dp"
+            android:layout_marginStart="28dp"
+            android:background="#FFFFFFFF"
+            android:contentDescription="@string/launcher_update_qr_description"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

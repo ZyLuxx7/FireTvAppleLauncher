@@ -1,0 +1,741 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrim"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <LinearLayout
+        android:id="@+id/quickHomeHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="45dp"
+        android:layout_marginTop="25dp"
+        android:layout_marginEnd="25dp"
+        android:gravity="end|center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/quickHeaderLeftBlock"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:layout_weight="1"
+            android:gravity="right|center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/quickHeaderGreeting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="14dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="right"
+                android:shadowColor="#CC000000"
+                android:shadowDy="1"
+                android:shadowRadius="2"
+                android:singleLine="true"
+                android:textColor="#FFFFFFFF"
+                android:textSize="@dimen/tvos_text_caption1" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right|center_vertical"
+                android:orientation="vertical">
+
+                <TextClock
+                    android:id="@+id/quickHeaderDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-medium"
+                    android:format12Hour="@string/date_format_home"
+                    android:format24Hour="@string/date_format_home"
+                    android:gravity="right"
+                    android:includeFontPadding="false"
+                    android:maxLines="2"
+                    android:maxWidth="145dp"
+                    android:shadowColor="#CC000000"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:singleLine="@bool/date_single_line"
+                    android:textColor="#E6FFFFFF"
+                    android:textSize="@dimen/tvos_text_caption1" />
+
+                <TextView
+                    android:id="@+id/quickHeaderShamsiDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="right"
+                    android:includeFontPadding="false"
+                    android:shadowColor="#CC000000"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:singleLine="true"
+                    android:textColor="#D9FFFFFF"
+                    android:textSize="10sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/quickHeaderMenuBar"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/tvos_menubar_height"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="6dp"
+                android:paddingEnd="8dp">
+
+                <TextClock
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:format12Hour="h:mm"
+                    android:format24Hour="HH:mm"
+                    android:includeFontPadding="false"
+                    android:letterSpacing="-0.02"
+                    android:shadowColor="#CC000000"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:textColor="@color/tvos_label_primary"
+                    android:textSize="@dimen/tvos_text_caption1" />
+
+                <TextClock
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:format12Hour="a"
+                    android:format24Hour=""
+                    android:includeFontPadding="false"
+                    android:shadowColor="#CC000000"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:textColor="@color/tvos_label_secondary"
+                    android:textSize="9sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/quickTopRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/quickStore"
+                    style="@style/HomeShortcutStoreButton"
+                    android:text="@string/quick_store"
+                    android:drawableStart="@drawable/ic_lock" />
+
+                <TextView
+                    android:id="@+id/quickRecent"
+                    style="@style/HomeShortcutIconButton"
+                    android:contentDescription="@string/quick_recent"
+                    android:drawableStart="@drawable/ic_switcher" />
+
+                <TextView
+                    android:id="@+id/quickSystemSettings"
+                    style="@style/HomeShortcutIconButton"
+                    android:contentDescription="@string/tv_settings"
+                    android:drawableStart="@drawable/ic_settings" />
+
+                <TextView
+                    android:id="@+id/quickPower"
+                    style="@style/HomeShortcutIconButton"
+                    android:contentDescription="@string/tv_power_off"
+                    android:drawableStart="@drawable/ic_power" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/panel"
+        android:layout_width="@dimen/tvos_cc_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="68dp"
+        android:layout_marginBottom="142dp"
+        android:layout_marginEnd="48dp"
+        android:background="@android:color/transparent"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:elevation="0dp"
+        android:orientation="vertical"
+        android:padding="@dimen/tvos_cc_padding">
+
+        <FrameLayout
+            android:id="@+id/quickSettingsViewport"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+        <ScrollView
+            android:id="@+id/quickSettingsScroll"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:overScrollMode="ifContentScrolls"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/quickSettingsScrollContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:id="@+id/quickControlsPage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/quickMainRow"
+            android:layout_width="match_parent"
+            android:layout_height="96dp"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/nowPlayingTile"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.02"
+                android:background="@drawable/quick_control_button_bg"
+                android:clickable="true"
+                android:descendantFocusability="afterDescendants"
+                android:elevation="4dp"
+                android:focusable="true"
+                android:orientation="vertical"
+                android:padding="5dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="30dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/nowPlayingArtwork"
+                        android:layout_width="31dp"
+                        android:layout_height="31dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_music_note" />
+
+                    <ImageButton
+                        android:id="@+id/nowPlayingPrevious"
+                        android:layout_width="20dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="2dp"
+                        android:background="@drawable/quick_control_circle_bg"
+                        android:contentDescription="@string/now_playing_previous"
+                        android:padding="4dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_media_previous" />
+
+                    <ImageButton
+                        android:id="@+id/nowPlayingPlayPause"
+                        android:layout_width="20dp"
+                        android:layout_height="24dp"
+                        android:background="@drawable/quick_control_circle_bg"
+                        android:contentDescription="@string/now_playing_play"
+                        android:padding="4dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_media_play" />
+
+                    <ImageButton
+                        android:id="@+id/nowPlayingNext"
+                        android:layout_width="20dp"
+                        android:layout_height="24dp"
+                        android:background="@drawable/quick_control_circle_bg"
+                        android:contentDescription="@string/now_playing_next"
+                        android:padding="4dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_media_next" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="23dp"
+                    android:layout_marginTop="3dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/quickTrackTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:ellipsize="end"
+                        android:focusable="true"
+                        android:fontFamily="sans-serif-medium"
+                        android:maxLines="1"
+                        android:nextFocusRight="@id/nowPlayingExpand"
+                        android:text="@string/now_playing_nothing"
+                        android:textSize="9sp" />
+
+                    <ImageButton
+                        android:id="@+id/nowPlayingExpand"
+                        android:layout_width="21dp"
+                        android:layout_height="21dp"
+                        android:background="@drawable/quick_control_circle_bg"
+                        android:contentDescription="@string/now_playing_expand"
+                        android:nextFocusLeft="@id/quickTrackTitle"
+                        android:padding="5dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_expand" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/quickTrackArtist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textSize="9sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/quickRightColumn"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="5dp"
+                android:layout_weight="0.98"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/wifiTile"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/quick_control_button_bg"
+                    android:clickable="true"
+                    android:descendantFocusability="blocksDescendants"
+                    android:elevation="4dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="6dp">
+
+                    <ImageView
+                        android:id="@+id/wifiTileIcon"
+                        android:layout_width="19dp"
+                        android:layout_height="19dp"
+                        android:duplicateParentState="true"
+                        android:src="@drawable/ic_wifi" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:layout_weight="1"
+                        android:duplicateParentState="true"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/wifiTileTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:duplicateParentState="true"
+                            android:fontFamily="sans-serif-medium"
+                            android:maxLines="1"
+                            android:text="@string/quick_wifi"
+                            android:textSize="9sp" />
+
+                        <TextView
+                            android:id="@+id/wifiTileStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:duplicateParentState="true"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="@string/quick_wifi_offline"
+                            android:textSize="8sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/audioTile"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/quick_control_audio_bg"
+                    android:clickable="true"
+                    android:descendantFocusability="blocksDescendants"
+                    android:elevation="4dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="6dp">
+
+                    <ImageView
+                        android:id="@+id/audioTileIcon"
+                        android:layout_width="19dp"
+                        android:layout_height="19dp"
+                        android:src="@drawable/ic_speaker" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:layout_weight="1"
+                        android:duplicateParentState="true"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/audioTileTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:duplicateParentState="true"
+                            android:fontFamily="sans-serif-medium"
+                            android:maxLines="1"
+                            android:text="@string/quick_audio"
+                            android:textSize="9sp" />
+
+                        <TextView
+                            android:id="@+id/audioTileStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="@string/quick_audio_tv"
+                            android:textSize="8sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/quickUtilityRow"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/clockTile"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="3dp"
+                android:layout_weight="1"
+                android:background="@drawable/quick_control_button_bg"
+                android:clickable="true"
+                android:descendantFocusability="blocksDescendants"
+                android:elevation="4dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="6dp">
+
+                <ImageView
+                    android:id="@+id/clockTileIcon"
+                    android:layout_width="19dp"
+                    android:layout_height="19dp"
+                    android:duplicateParentState="true"
+                    android:src="@drawable/ic_moon" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/clockTileTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:maxLines="1"
+                        android:text="@string/quick_clock"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:id="@+id/clockTileStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:duplicateParentState="true"
+                        android:maxLines="1"
+                        android:text="@string/quick_clock_start"
+                        android:textSize="8sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/wallpaperTile"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="3dp"
+                android:layout_weight="1"
+                android:background="@drawable/quick_control_button_bg"
+                android:clickable="true"
+                android:descendantFocusability="blocksDescendants"
+                android:elevation="4dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="6dp">
+
+                <ImageView
+                    android:id="@+id/wallpaperTileIcon"
+                    android:layout_width="19dp"
+                    android:layout_height="19dp"
+                    android:duplicateParentState="true"
+                    android:src="@drawable/ic_wallpaper_landscape" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:layout_weight="1"
+                    android:duplicateParentState="true"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/wallpaperTileTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:duplicateParentState="true"
+                        android:fontFamily="sans-serif-medium"
+                        android:maxLines="1"
+                        android:text="@string/quick_wallpaper"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:id="@+id/wallpaperTileStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:duplicateParentState="true"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/quick_wallpaper_dynamic"
+                        android:textSize="8sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/quickMemoryStatus"
+            android:layout_width="match_parent"
+            android:layout_height="18dp"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/quick_control_footer_bg"
+            android:elevation="4dp"
+            android:gravity="center"
+            android:textColor="@color/tvos_label_secondary"
+            android:textSize="8sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/quickPlayerPage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/quickLargePlayer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/quick_control_player_bg"
+                    android:clickable="false"
+                    android:descendantFocusability="afterDescendants"
+                    android:elevation="4dp"
+                    android:focusable="true"
+                    android:nextFocusDown="@id/quickLargePlayer"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:id="@+id/quickLargePlayerLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="@string/quick_large_player"
+                        android:textSize="11sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="80dp"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/quickLargeArtwork"
+                            android:layout_width="72dp"
+                            android:layout_height="72dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_music_note" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/quickLargeTrackTitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:fontFamily="sans-serif-medium"
+                                android:maxLines="2"
+                                android:text="@string/now_playing_nothing"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/quickLargeTrackArtist"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="@string/now_playing_unknown_artist"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <ProgressBar
+                        android:id="@+id/quickLargeProgress"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="4dp"
+                        android:layout_marginTop="6dp"
+                        android:max="1000"
+                        android:progress="0" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/quickLargeElapsed"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="0:00"
+                            android:textSize="8sp" />
+
+                        <TextView
+                            android:id="@+id/quickLargeDuration"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0:00"
+                            android:textSize="8sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <ImageButton
+                            android:id="@+id/quickLargePrevious"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/quick_control_circle_bg"
+                            android:contentDescription="@string/now_playing_previous"
+                            android:padding="9dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_media_previous" />
+
+                        <ImageButton
+                            android:id="@+id/quickLargePlayPause"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:layout_marginHorizontal="14dp"
+                            android:background="@drawable/quick_control_circle_bg"
+                            android:contentDescription="@string/now_playing_play"
+                            android:padding="9dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_media_play" />
+
+                        <ImageButton
+                            android:id="@+id/quickLargeNext"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/quick_control_circle_bg"
+                            android:contentDescription="@string/now_playing_next"
+                            android:nextFocusDown="@id/quickLargeNext"
+                            android:padding="9dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_media_next" />
+                    </LinearLayout>
+                </LinearLayout>
+        </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+        </FrameLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/quickPageRail"
+        android:layout_width="34dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="160dp"
+        android:layout_marginEnd="5dp"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/quickPageHeart"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:background="@drawable/quick_control_circle_bg"
+            android:contentDescription="@string/quick_page_controls"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_heart" />
+
+        <ImageButton
+            android:id="@+id/quickPageDot"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/quick_control_circle_bg"
+            android:contentDescription="@string/quick_page_player"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_dot" />
+
+        <ImageButton
+            android:id="@+id/quickAddControl"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/quick_control_circle_bg"
+            android:contentDescription="@string/quick_edit_add"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_add" />
+    </LinearLayout>
+</FrameLayout>

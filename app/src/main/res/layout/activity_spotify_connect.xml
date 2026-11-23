@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/settings_backdrop">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#46000000" />
+
+    <TextView
+        android:id="@+id/spotifyConnectBack"
+        style="@style/SettingsRow"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="42dp"
+        android:layout_marginTop="30dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:text="@string/now_playing_back" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="150dp"
+        android:layout_marginEnd="150dp"
+        android:background="@drawable/glass_panel"
+        android:orientation="vertical"
+        android:padding="28dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/spotify_connect_title"
+            android:textColor="#FFFFFFFF"
+            android:textSize="30sp"
+            android:fontFamily="sans-serif-bold" />
+
+        <TextView
+            android:id="@+id/spotifyConnectDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/spotify_connect_description"
+            android:textColor="#D9FFFFFF"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/spotifyConnectAction"
+            style="@style/SettingsRow"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="@string/spotify_connect_action_setup" />
+
+        <TextView
+            android:id="@+id/spotifyConnectChangeClientId"
+            style="@style/SettingsRow"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/spotify_connect_change_client_id"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/spotifyConnectStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/spotify_connect_status_setup"
+            android:textColor="#D9FFFFFF"
+            android:textSize="14sp" />
+
+        <ScrollView
+            android:id="@+id/spotifyConnectDeviceScroll"
+            android:layout_width="match_parent"
+            android:layout_height="260dp"
+            android:layout_marginTop="8dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/spotifyConnectDevices"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
+        <TextView
+            android:id="@+id/spotifyConnectSignOut"
+            style="@style/SettingsRow"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="@string/spotify_connect_sign_out"
+            android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

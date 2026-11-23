@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/spotifyPlaylistPanel"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/glass_panel"
+    android:elevation="12dp"
+    android:orientation="vertical"
+    android:padding="@dimen/tvos_panel_padding">
+
+    <TextView
+        android:id="@+id/spotifyPlaylistPopupTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:fontFamily="sans-serif-black"
+        android:maxLines="1"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:textColor="@color/tvos_label_primary"
+        android:textSize="@dimen/tvos_text_headline" />
+
+    <TextView
+        android:id="@+id/spotifyPlaylistPopupStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:textColor="@drawable/pill_text_dim"
+        android:textSize="@dimen/tvos_text_caption1" />
+
+    <TextView
+        android:id="@+id/spotifyPlaylistCreateAction"
+        style="@style/SettingsRow"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/spotifyPlaylistPopupAction"
+        style="@style/SettingsRow"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center" />
+
+    <ScrollView
+        android:id="@+id/spotifyPlaylistScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="false"
+        android:scrollbars="vertical"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/spotifyPlaylists"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+</LinearLayout>

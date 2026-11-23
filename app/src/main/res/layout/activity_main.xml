@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Scenic Home with a landscape clock, compact top controls and a bottom-aligned glass dock/grid. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:background="@drawable/home_backdrop">
+
+    <ImageView
+        android:id="@+id/homeWallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        android:src="@drawable/home_wallpaper" />
+
+    <View
+        android:id="@+id/wallpaperShade"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#24000000"
+        android:importantForAccessibility="no" />
+
+    <!-- Time-of-day backdrop, drawn once a minute (config.xml sky_intensity; 0 keeps it hidden). -->
+    <com.appletv.launcher.SkyView
+        android:id="@+id/sky"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no" />
+
+    <!-- Ambient glow in the colour of the focused dock app. -->
+    <View
+        android:id="@+id/ambient"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0" />
+
+    <FrameLayout
+        android:id="@+id/homePlayerBackdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:importantForAccessibility="no">
+
+        <ImageView
+            android:id="@+id/homePlayerBackgroundArt"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/now_playing_backdrop_shade" />
+    </FrameLayout>
+
+    <com.appletv.launcher.TopShelfView
+        android:id="@+id/topShelfArtwork"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
+    <!-- Top Shelf title: the focused dock app's name, positioned above the dock in code.
+         tvOS Title 1 Emphasized (76px bold). -->
+    <TextView
+        android:id="@+id/heroName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="45dp"
+        android:alpha="0"
+        android:textColor="@color/tvos_label_primary"
+        android:textSize="@dimen/tvos_text_title3"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="-0.02"
+        android:includeFontPadding="false"
+        android:shadowColor="#73000000"
+        android:shadowDy="1"
+        android:shadowRadius="6"
+        android:singleLine="true" />
+
+    <LinearLayout
+        android:id="@+id/homeContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:paddingTop="25dp">
+
+        <!-- Greeting and date sit beside the Home shortcuts. -->
+        <LinearLayout
+            android:id="@+id/homeHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="45dp"
+            android:layout_marginEnd="25dp"
+            android:orientation="horizontal"
+            android:gravity="end|center_vertical"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:id="@+id/leftBlock"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="12dp"
+                android:orientation="horizontal"
+                android:gravity="right|center_vertical">
+
+                <TextView
+                    android:id="@+id/greeting"
+                    android:gravity="right"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="14dp"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="@dimen/tvos_text_caption1"
+                    android:fontFamily="sans-serif-medium"
+                    android:shadowColor="#CC000000"
+                    android:shadowDy="1"
+                    android:shadowRadius="2" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="right|center_vertical"
+                    android:orientation="vertical">
+
+                    <TextClock
+                        android:id="@+id/date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxWidth="145dp"
+                        android:gravity="right"
+                        android:singleLine="@bool/date_single_line"
+                        android:maxLines="2"
+                        android:ellipsize="end"
+                        android:format12Hour="@string/date_format_home"
+                        android:format24Hour="@string/date_format_home"
+                        android:textColor="#E6FFFFFF"
+                        android:textSize="@dimen/tvos_text_caption1"
+                        android:fontFamily="sans-serif-medium"
+                        android:includeFontPadding="false"
+                        android:shadowColor="#CC000000"
+                        android:shadowDy="1"
+                        android:shadowRadius="2" />
+
+                    <TextView
+                        android:id="@+id/shamsiDate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="right"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:textColor="#D9FFFFFF"
+                        android:textSize="10sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:includeFontPadding="false"
+                        android:shadowColor="#CC000000"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Keep the clock visible without restoring the old menu-bar platter. -->
+            <LinearLayout
+                android:id="@+id/homeMenuBar"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/tvos_menubar_height"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:background="@android:color/transparent">
+
+                <LinearLayout
+                    android:id="@+id/clockPanel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextClock
+                        android:id="@+id/clock"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:format12Hour="h:mm"
+                        android:format24Hour="HH:mm"
+                        android:textColor="@color/tvos_label_primary"
+                        android:textSize="@dimen/tvos_text_caption1"
+                        android:fontFamily="sans-serif-medium"
+                        android:includeFontPadding="false"
+                        android:shadowColor="#E6000000"
+                        android:shadowDy="1"
+                        android:shadowRadius="8"
+                        android:letterSpacing="-0.02" />
+
+                    <TextClock
+                        android:id="@+id/ampm"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:format12Hour="a"
+                        android:format24Hour=""
+                        android:textColor="@color/tvos_label_secondary"
+                        android:textSize="9sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:includeFontPadding="false"
+                        android:shadowColor="#CC000000"
+                        android:shadowDy="1"
+                        android:shadowRadius="2" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/topButtons"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:clipChildren="false"
+                    android:clipToPadding="false">
+
+                    <TextView
+                        android:id="@+id/btnStore"
+                        style="@style/HomeShortcutStoreButton"
+                        android:text="@string/quick_store"
+                        android:drawableStart="@drawable/ic_lock"
+                        android:nextFocusDown="@+id/grid" />
+
+                    <TextView
+                        android:id="@+id/btnInputs"
+                        style="@style/TopButton"
+                        android:text="@string/inputs"
+                        android:drawableStart="@drawable/ic_input"
+                        android:visibility="gone"
+                        android:nextFocusDown="@+id/grid" />
+
+                    <TextView
+                        android:id="@+id/btnWifi"
+                        style="@style/TopButton"
+                        android:maxWidth="480dp"
+                        android:singleLine="true"
+                        android:ellipsize="none"
+                        android:text="@string/wifi"
+                        android:drawableStart="@drawable/ic_wifi"
+                        android:visibility="gone"
+                        android:nextFocusDown="@+id/grid" />
+
+                    <TextView
+                        android:id="@+id/btnRecentApps"
+                        style="@style/HomeShortcutIconButton"
+                        android:contentDescription="@string/recent_apps"
+                        android:drawableStart="@drawable/ic_switcher"
+                        android:nextFocusDown="@+id/grid" />
+
+                    <TextView
+                        android:id="@+id/btnSettings"
+                        style="@style/HomeShortcutIconButton"
+                        android:text=""
+                        android:contentDescription="@string/settings"
+                        android:drawableStart="@drawable/ic_settings"
+                        android:nextFocusDown="@+id/grid" />
+
+                    <TextView
+                        android:id="@+id/btnPower"
+                        style="@style/HomeShortcutIconButton"
+                        android:text=""
+                        android:contentDescription="@string/power_menu"
+                        android:drawableStart="@drawable/ic_power"
+                        android:nextFocusDown="@+id/grid" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/continueShelf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="45dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="45dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/continueShelfTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="3dp"
+                android:paddingBottom="6dp"
+                android:text="@string/continue_watching"
+                android:textColor="@color/tvos_label_primary"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-bold" />
+
+            <HorizontalScrollView
+                android:id="@+id/continueShelfScroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:fillViewport="false"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/continueShelfCards"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+        </LinearLayout>
+
+        <!-- The grid itself does not clip so focused tiles can overflow their cells. -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="10dp">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/grid"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingStart="@dimen/tvos_grid_inset"
+                android:paddingEnd="@dimen/tvos_grid_inset"
+                android:paddingTop="10dp"
+                android:paddingBottom="6dp"
+                android:clipToPadding="false"
+                android:clipChildren="false"
+                android:overScrollMode="never"
+                android:scrollbars="none"
+                android:descendantFocusability="afterDescendants" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/homeWallpaperForeground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        android:src="@drawable/home_wallpaper_foreground" />
+
+    <LinearLayout
+        android:id="@+id/homePlayerPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="56dp"
+        android:layout_marginTop="112dp"
+        android:layout_marginEnd="56dp"
+        android:gravity="top"
+        android:orientation="horizontal"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:visibility="gone">
+
+        <FrameLayout
+            android:layout_width="170dp"
+            android:layout_height="170dp"
+            android:translationY="12dp"
+            android:background="@drawable/tile_bg"
+            android:clipToOutline="true">
+
+            <ImageView
+                android:id="@+id/homePlayerArtwork"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:contentDescription="@null" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/homePlayerText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="28dp"
+            android:layout_weight="0.9"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:translationY="-5dp"
+            android:padding="0dp">
+
+            <com.appletv.launcher.NowPlayingTitleRow
+                android:id="@+id/homePlayerTitleRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/homePlayerArtist"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#E6FFFFFF"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/homePlayerAlbum"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#BFFFFFFF"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/homePlayerSource"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="#99FFFFFF"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:id="@+id/homePlayerProgressRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/homePlayerElapsed"
+                    android:layout_width="42dp"
+                    android:layout_height="wrap_content"
+                    android:textColor="#D9FFFFFF"
+                    android:textSize="12sp" />
+
+                <com.appletv.launcher.ApplePlaybackProgressView
+                    android:id="@+id/homePlayerProgress"
+                    android:layout_width="0dp"
+                    android:layout_height="18dp"
+                    android:layout_weight="1"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:contentDescription="@string/now_playing_progress_description" />
+
+                <TextView
+                    android:id="@+id/homePlayerDuration"
+                    android:layout_width="42dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textColor="#D9FFFFFF"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/homePlayerLyricsPanel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="48dp"
+            android:layout_marginTop="20dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1.08"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/homePlayerLyricsList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:clipToPadding="false"
+                android:descendantFocusability="blocksDescendants"
+                android:focusable="false"
+                android:overScrollMode="never"
+                android:scrollbars="none" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- The single floating glass highlight that springs between tiles. -->
+    <com.appletv.launcher.GlassHighlightView
+        android:id="@+id/glass"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:alpha="0"
+        android:importantForAccessibility="no" />
+</FrameLayout>

@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/settings_backdrop">
+
+    <TextView
+        android:id="@+id/settingsTitle"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginStart="48dp"
+        android:gravity="center_vertical"
+        android:text="@string/settings_home_title"
+        android:textColor="@color/tvos_label_primary"
+        android:textSize="@dimen/tvos_text_title3"
+        android:fontFamily="sans-serif-black"
+        android:letterSpacing="-0.01" />
+
+    <LinearLayout
+        android:id="@+id/settingsCategoriesPanel"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:paddingBottom="18dp">
+
+        <ScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.7"
+            android:paddingStart="48dp"
+            android:paddingEnd="22dp"
+            android:scrollbars="none"
+            android:overScrollMode="never">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/settingsCategoryGeneral"
+                    style="@style/SettingsCategory"
+                    android:drawableStart="@drawable/ic_wallpaper_landscape"
+                    android:text="@string/settings_category_general" />
+                <TextView
+                    android:id="@+id/settingsCategoryNetwork"
+                    style="@style/SettingsCategory"
+                    android:drawableStart="@drawable/ic_weather"
+                    android:text="@string/settings_category_network" />
+                <TextView
+                    android:id="@+id/settingsCategoryApps"
+                    style="@style/SettingsCategory"
+                    android:drawableStart="@drawable/ic_apps"
+                    android:text="@string/settings_category_apps" />
+                <TextView
+                    android:id="@+id/settingsCategoryAccounts"
+                    style="@style/SettingsCategory"
+                    android:drawableStart="@drawable/ic_person"
+                    android:text="@string/settings_category_accounts" />
+                <TextView
+                    android:id="@+id/settingsCategoryVideoAudio"
+                    style="@style/SettingsCategory"
+                    android:drawableStart="@drawable/ic_av"
+                    android:text="@string/settings_category_video_audio" />
+                <TextView
+                    android:id="@+id/settingsCategoryRemotes"
+                    style="@style/SettingsCategory"
+                    android:drawableStart="@drawable/ic_input"
+                    android:text="@string/settings_category_remotes" />
+                <TextView
+                    android:id="@+id/settingsCategoryAirPlay"
+                    style="@style/SettingsCategory"
+                    android:drawableStart="@drawable/ic_settings"
+                    android:text="@string/settings_category_airplay" />
+                <TextView
+                    android:id="@+id/settingsCategoryLanguage"
+                    style="@style/SettingsCategory"
+                    android:drawableStart="@drawable/ic_language"
+                    android:text="@string/settings_category_language" />
+                <TextView
+                    android:id="@+id/settingsCategoryAccessibility"
+                    style="@style/SettingsCategory"
+                    android:drawableStart="@drawable/ic_accessibility"
+                    android:text="@string/settings_category_accessibility" />
+                <TextView
+                    android:id="@+id/settingsCategorySystem"
+                    style="@style/SettingsCategory"
+                    android:drawableStart="@drawable/ic_update"
+                    android:text="@string/settings_category_system" />
+                <TextView
+                    android:id="@+id/settingsCategorySleep"
+                    style="@style/SettingsCategory"
+                    android:drawableStart="@drawable/ic_info"
+                    android:text="@string/settings_category_sleep" />
+            </LinearLayout>
+        </ScrollView>
+
+        <FrameLayout
+            android:id="@+id/settingsContent"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.3"
+            android:paddingStart="30dp"
+            android:paddingEnd="30dp">
+
+            <ScrollView
+                android:id="@+id/settingsPageGeneral"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="36dp"
+                    android:clipChildren="false">
+                    <TextView style="@style/SettingsPageTitle" android:text="@string/settings_category_general" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_group_dock" />
+                    <TextView android:id="@+id/dockVisualScaleLabel" style="@style/SettingsFootnote" android:layout_marginTop="8dp" />
+                    <SeekBar
+                        android:id="@+id/dockVisualScale"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:max="45"
+                        android:progress="25"
+                        android:focusable="true" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/settings_group_look" />
+                    <TextView android:id="@+id/homeLookNight" style="@style/SettingsRow" android:layout_marginTop="8dp" android:text="@string/setup_appearance_night" />
+                    <TextView android:id="@+id/homeLookClassic" style="@style/SettingsRow" android:layout_marginTop="4dp" android:text="@string/setup_appearance_classic" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/settings_group_scenes" />
+                    <TextView android:id="@+id/homeSceneNight" style="@style/SettingsRow" android:layout_marginTop="8dp" android:text="@string/settings_scene_night" />
+                    <TextView android:id="@+id/homeSceneGoldenHour" style="@style/SettingsRow" android:layout_marginTop="4dp" android:text="@string/settings_scene_golden_hour" />
+                    <TextView android:id="@+id/homeSceneWaterline" style="@style/SettingsRow" android:layout_marginTop="4dp" android:text="@string/settings_scene_waterline" />
+
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/settings_group_player_background" />
+                    <TextView android:id="@+id/playerBackgroundZoomLabel" style="@style/SettingsFootnote" android:layout_marginTop="8dp" />
+                    <SeekBar
+                        android:id="@+id/playerBackgroundZoom"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:max="60"
+                        android:progress="0"
+                        android:focusable="true" />
+                    <TextView android:id="@+id/playerBackgroundXLabel" style="@style/SettingsFootnote" android:layout_marginTop="4dp" />
+                    <SeekBar
+                        android:id="@+id/playerBackgroundX"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:max="200"
+                        android:progress="100"
+                        android:focusable="true" />
+                    <TextView android:id="@+id/playerBackgroundYLabel" style="@style/SettingsFootnote" android:layout_marginTop="4dp" />
+                    <SeekBar
+                        android:id="@+id/playerBackgroundY"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:max="200"
+                        android:progress="100"
+                        android:focusable="true" />
+                </LinearLayout>
+            </ScrollView>
+
+            <ScrollView
+                android:id="@+id/settingsPageAccounts"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="36dp">
+                    <TextView style="@style/SettingsPageTitle" android:text="@string/settings_category_accounts" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_group_account" />
+                    <TextView android:id="@+id/accountNameChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/account_name_description" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/settings_group_services" />
+                    <TextView android:id="@+id/spotifyConnectChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" android:text="@string/settings_spotify_connect" />
+                    <TextView android:id="@+id/lyricsProviderChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/lyrics_provider_default" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/lyrics_provider_hint" />
+                    <TextView android:id="@+id/musixmatchApiKeyChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/musixmatch_api_key_settings" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/musixmatch_api_key_settings_hint" />
+                </LinearLayout>
+            </ScrollView>
+
+            <ScrollView
+                android:id="@+id/settingsPageVideoAudio"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="36dp">
+                    <TextView style="@style/SettingsPageTitle" android:text="@string/settings_category_video_audio" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_group_universal_actions" />
+                    <TextView android:id="@+id/networkChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" />
+                    <TextView android:id="@+id/bluetoothChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/settings_bluetooth" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_group_audio" />
+                    <TextView android:id="@+id/audioOutputChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" android:text="@string/settings_audio_output" />
+                    <TextView android:id="@+id/nowPlayingChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" />
+                    <TextView android:id="@+id/playerTitleScrollSpeedLabel" style="@style/SettingsFootnote" android:layout_marginTop="8dp" />
+                    <SeekBar
+                        android:id="@+id/playerTitleScrollSpeed"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:max="99"
+                        android:progress="24"
+                        android:focusable="true"
+                        android:contentDescription="@string/settings_title_scroll_speed" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="2dp" android:text="@string/settings_title_scroll_speed_hint" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/settings_group_inputs" />
+                    <TextView android:id="@+id/airPlayTvSettingsChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" android:text="@string/settings_inputs" />
+                </LinearLayout>
+            </ScrollView>
+
+            <ScrollView
+                android:id="@+id/settingsPageAirPlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="36dp">
+                    <TextView style="@style/SettingsPageTitle" android:text="@string/settings_category_airplay" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_group_quick_panel" />
+                    <TextView android:id="@+id/quickPanelScaleLabel" style="@style/SettingsFootnote" android:layout_marginTop="8dp" />
+                    <SeekBar
+                        android:id="@+id/quickPanelScale"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:max="40"
+                        android:progress="20"
+                        android:focusable="true" />
+                    <TextView android:id="@+id/quickSettingsCustomizeChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="12dp" android:text="@string/settings_quick_settings_customize" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/settings_quick_settings_customize_hint" />
+                </LinearLayout>
+            </ScrollView>
+
+            <ScrollView
+                android:id="@+id/settingsPageLanguage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="36dp">
+                    <TextView style="@style/SettingsPageTitle" android:text="@string/settings_category_language" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_category_language" />
+                    <TextView android:id="@+id/languageChoice" style="@style/SettingsRow" android:layout_marginTop="8dp" />
+                </LinearLayout>
+            </ScrollView>
+
+            <ScrollView
+                android:id="@+id/settingsPageRemotes"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="36dp">
+                    <TextView style="@style/SettingsPageTitle" android:text="@string/settings_category_remotes" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_group_home" />
+                    <TextView android:id="@+id/defaultHomeChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" android:text="@string/home_settings" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/home_settings_help" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/settings_group_remote" />
+                    <TextView android:id="@+id/homeRedirectChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/home_redirect_hint" />
+                </LinearLayout>
+            </ScrollView>
+
+            <ScrollView
+                android:id="@+id/settingsPageAccessibility"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="36dp">
+                    <TextView style="@style/SettingsPageTitle" android:text="@string/settings_category_accessibility" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_group_accessibility" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="12dp" android:text="@string/settings_accessibility_status_title" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/settings_accessibility_status_help" />
+                    <TextView android:id="@+id/homeKeyServicePermissionChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" />
+                    <TextView android:id="@+id/inputKeyServicePermissionChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" />
+                    <TextView android:id="@+id/tvPowerServicePermissionChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" />
+                    <TextView android:id="@+id/liquidGlassServicePermissionChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" />
+                    <TextView android:id="@+id/homeRedirectServicePermissionChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/settings_group_audio" />
+                    <TextView android:id="@+id/equalizerAudioPermissionChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/accessibility_audio_permission_help" />
+                    <TextView android:id="@+id/settingsPowerOffChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" android:text="@string/tv_power_off" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/tv_power_help" />
+                    <TextView android:id="@+id/externalGlassChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/external_glass_help" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/settings_group_personalization" />
+                    <TextView android:id="@+id/appearanceChoice" style="@style/SettingsRow" android:layout_marginTop="8dp" />
+                    <TextView android:id="@+id/homeWallpaperChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" />
+                    <TextView android:id="@+id/followThemeChoice" style="@style/SettingsRow" android:layout_marginTop="4dp" android:text="@string/follow_theme" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/follow_theme_hint" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/settings_group_motion" />
+                    <TextView android:id="@+id/animationsChoice" style="@style/SettingsRow" android:layout_marginTop="8dp" />
+                    <TextView android:id="@+id/advancedChoice" style="@style/SettingsRow" android:layout_marginTop="4dp" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/advanced_effects_warning" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/glass_group" />
+                    <TextView android:id="@+id/liquidGlassChoice" style="@style/SettingsRow" android:layout_marginTop="8dp" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/liquid_glass_warning" />
+                    <TextView android:id="@+id/glassStrengthLabel" style="@style/SettingsFootnote" android:layout_marginTop="8dp" />
+                    <SeekBar
+                        android:id="@+id/glassStrength"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:max="100"
+                        android:progress="65"
+                        android:focusable="true"
+                        android:contentDescription="@string/glass_strength" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="2dp" android:text="@string/glass_effect_hint" />
+                    <TextView android:id="@+id/glassReflectionsChoice" style="@style/SettingsRow" android:layout_marginTop="4dp" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/settings_group_maintenance" />
+                    <TextView android:id="@+id/settingsFactoryResetChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" android:text="@string/launcher_reset" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="4dp" android:text="@string/launcher_reset_hint" />
+                    <TextView android:id="@+id/settingsRestartChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/launcher_restart" />
+                    <TextView android:id="@+id/settingsSleepChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/settings_sleep_action" />
+                </LinearLayout>
+            </ScrollView>
+
+            <ScrollView
+                android:id="@+id/settingsPageApps"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="36dp">
+                    <TextView style="@style/SettingsPageTitle" android:text="@string/settings_category_apps" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_group_home_apps" />
+                    <TextView android:id="@+id/appsManagementChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="8dp" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="20dp" android:text="@string/columns_label" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal"
+                        android:clipChildren="false">
+                        <TextView android:id="@+id/dockApps3" style="@style/SettingsColumnChoice" android:text="3" />
+                        <TextView android:id="@+id/dockApps4" style="@style/SettingsColumnChoice" android:text="4" />
+                        <TextView android:id="@+id/dockApps5" style="@style/SettingsColumnChoice" android:text="5" />
+                        <TextView android:id="@+id/dockApps6" style="@style/SettingsColumnChoice" android:text="6" />
+                        <TextView android:id="@+id/dockApps7" style="@style/SettingsColumnChoice" android:text="7" />
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
+
+            <ScrollView
+                android:id="@+id/settingsPageNetwork"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="36dp">
+                    <TextView style="@style/SettingsPageTitle" android:text="@string/settings_category_network" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_group_scenes" />
+                    <TextView android:id="@+id/weatherEnabledChoice" style="@style/SettingsRow" android:layout_marginTop="8dp" />
+                    <TextView android:id="@+id/weatherLocationChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/settings_weather_location" />
+                    <TextView android:id="@+id/weatherCityChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" />
+                    <TextView style="@style/SettingsFootnote" android:layout_marginTop="8dp" android:text="@string/settings_weather_hint" />
+                </LinearLayout>
+            </ScrollView>
+
+            <ScrollView
+                android:id="@+id/settingsPageSystem"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:overScrollMode="never">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="36dp">
+                    <TextView style="@style/SettingsPageTitle" android:text="@string/settings_category_system" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_category_system" />
+                    <TextView
+                        android:id="@+id/settingsVersionInfo"
+                        style="@style/SettingsFootnote"
+                        android:layout_marginTop="8dp" />
+                    <TextView android:id="@+id/settingsSoftwareUpdatesChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="16dp" android:text="@string/settings_software_updates" />
+                    <TextView android:id="@+id/settingsLauncherUpdateChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/settings_launcher_update" />
+                </LinearLayout>
+            </ScrollView>
+
+            <ScrollView
+                android:id="@+id/settingsPageSleep"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="36dp">
+                    <TextView style="@style/SettingsPageTitle" android:text="@string/settings_category_sleep" />
+                    <TextView style="@style/SettingsGroupLabel" android:layout_marginTop="16dp" android:text="@string/settings_group_information" />
+                    <TextView
+                        android:id="@+id/setupWizardChoice"
+                        style="@style/SettingsNavigationRow"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/setup_wizard_open" />
+                    <TextView android:id="@+id/settingsHelpChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/settings_help" />
+                    <TextView android:id="@+id/settingsLegalChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/settings_legal_information" />
+                    <TextView android:id="@+id/settingsNewFeaturesChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/settings_new_features" />
+                </LinearLayout>
+            </ScrollView>
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>

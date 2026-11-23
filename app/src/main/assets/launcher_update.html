@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>{{TITLE}}</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #080a0f;
+      color: #f7f7fa;
+      font-synthesis: none;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: clamp(18px, 5vw, 56px);
+      background:
+        radial-gradient(ellipse at 18% 0%, rgba(91, 112, 199, .25), transparent 48%),
+        radial-gradient(ellipse at 90% 100%, rgba(69, 183, 174, .16), transparent 42%),
+        #080a0f;
+    }
+    main { width: min(760px, 100%); margin: 0 auto; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 650; letter-spacing: .01em; }
+    .brand-mark {
+      display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px;
+      background: linear-gradient(145deg, rgba(255,255,255,.25), rgba(255,255,255,.06));
+      border: 1px solid rgba(255,255,255,.2); box-shadow: 0 8px 26px rgba(0,0,0,.25);
+    }
+    .local-tag { color: #a7e7dc; font-size: .78rem; padding: 8px 12px; border-radius: 999px;
+      border: 1px solid rgba(143,227,216,.25); background: rgba(68,160,151,.12); }
+    .panel {
+      border: 1px solid rgba(255,255,255,.12); border-radius: 26px; padding: clamp(22px, 5vw, 38px);
+      background: linear-gradient(145deg, rgba(31,34,43,.86), rgba(16,18,24,.9));
+      box-shadow: 0 22px 70px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.08);
+    }
+    h1 { font-size: clamp(1.7rem, 5vw, 2.45rem); line-height: 1.12; margin: 0 0 10px; }
+    .intro, .hint { color: #aeb2bd; line-height: 1.55; }
+    .intro { margin: 0 0 26px; }
+    label { display: block; font-size: .88rem; font-weight: 620; margin: 18px 0 8px; }
+    input, textarea {
+      width: 100%; color: #f6f7fb; font: inherit; border-radius: 14px; padding: 14px 15px;
+      border: 1px solid rgba(255,255,255,.16); background: rgba(0,0,0,.25); outline: none;
+    }
+    input:focus, textarea:focus { border-color: #83d2ca; box-shadow: 0 0 0 3px rgba(131,210,202,.13); }
+    input { letter-spacing: .24em; max-width: 230px; }
+    textarea { min-height: 138px; resize: vertical; letter-spacing: normal; }
+    button {
+      border: 0; border-radius: 14px; padding: 14px 19px; color: #081012; font: inherit;
+      font-weight: 700; background: linear-gradient(120deg, #a4e7df, #7acbc2);
+      cursor: pointer; box-shadow: 0 8px 26px rgba(68,173,165,.18);
+    }
+    button:disabled { opacity: .48; cursor: not-allowed; }
+    .secondary { color: #f5f6fa; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.14); box-shadow: none; }
+    .status { min-height: 26px; margin: 16px 0 0; color: #c5cad5; }
+    .status.error { color: #ffaaa8; }
+    .status.success { color: #9ce5d8; }
+    .candidate-list { display: grid; gap: 12px; margin-top: 20px; }
+    .candidate {
+      border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 17px;
+      background: rgba(255,255,255,.045);
+    }
+    .candidate-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .candidate-title { font-weight: 680; overflow-wrap: anywhere; }
+    .candidate-message { color: #aeb2bd; font-size: .9rem; margin-top: 7px; }
+    .fingerprint { color: #858b98; font: .72rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+      overflow-wrap: anywhere; margin-top: 11px; }
+    .candidate button { margin-top: 14px; }
+    .hidden { display: none !important; }
+    footer { color: #858b98; font-size: .78rem; line-height: 1.5; margin: 18px 4px 0; }
+    @media (max-width: 520px) {
+      body { padding: 16px; }
+      header { align-items: flex-start; }
+      .local-tag { font-size: .68rem; }
+      .panel { border-radius: 22px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">TV</span><span>Apple TV Launcher</span></div>
+    <span class="local-tag">LOCAL WI-FI</span>
+  </header>
+  <section class="panel">
+    <h1 id="title"></h1>
+    <p class="intro" id="intro"></p>
+    <form id="pairing-form">
+      <label id="pin-label" for="pin"></label>
+      <input id="pin" inputmode="numeric" autocomplete="off" maxlength="6" type="password" required>
+      <button class="secondary" id="verify" type="submit"></button>
+    </form>
+    <form id="links-form" class="hidden">
+      <label id="links-label" for="links"></label>
+      <textarea id="links" autocomplete="off" spellcheck="false"></textarea>
+      <p class="hint" id="links-hint"></p>
+      <button id="check" type="submit"></button>
+    </form>
+    <p class="status" id="status" aria-live="polite"></p>
+    <section class="hidden" id="candidates-section">
+      <h2 id="candidates-title"></h2>
+      <div class="candidate-list" id="candidates"></div>
+    </section>
+  </section>
+  <footer id="footer"></footer>
+</main>
+<script>
+  const T = {
+    title: {{TITLE}},
+    intro: {{INTRO}},
+    pinLabel: {{PIN_LABEL}},
+    linksLabel: {{LINKS_LABEL}},
+    linksHint: {{LINKS_HINT}},
+    verifyButton: {{VERIFY_BUTTON}},
+    submitButton: {{SUBMIT_BUTTON}},
+    candidatesTitle: {{CANDIDATES_TITLE}},
+    installButton: {{INSTALL_BUTTON}},
+    enterPin: {{ENTER_PIN}},
+    badPin: {{BAD_PIN}},
+    expired: {{EXPIRED}},
+    verifying: {{VERIFYING}},
+    noCandidates: {{NO_CANDIDATES}},
+    installSent: {{INSTALL_SENT}},
+    versionLabel: {{VERSION_LABEL}},
+    hashLabel: {{HASH_LABEL}},
+    signerLabel: {{SIGNER_LABEL}},
+    error: {{ERROR}},
+    ready: {{READY}},
+    queued: {{QUEUED}},
+    downloading: {{DOWNLOADING}},
+    installing: {{INSTALLING}}
+  };
+  const base = location.pathname.replace(/\/$/, "");
+  const pin = document.getElementById("pin");
+  const statusNode = document.getElementById("status");
+  const candidatesNode = document.getElementById("candidates");
+  let paired = false;
+  let polling = false;
+
+  function showStatus(text, kind) {
+    statusNode.textContent = text || "";
+    statusNode.className = "status" + (kind ? " " + kind : "");
+  }
+  async function api(action, extra) {
+    const response = await fetch(base + "/api", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify(Object.assign({ action: action, pin: pin.value }, extra || {}))
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.message || T.error);
+    return data;
+  }
+  function textForStatus(status) {
+    if (status === "queued") return T.queued;
+    if (status === "downloading") return T.downloading;
+    if (status === "ready") return T.ready;
+    if (status === "installing") return T.installing;
+    return T.error;
+  }
+  function renderCandidates(items) {
+    candidatesNode.replaceChildren();
+    document.getElementById("candidates-section").classList.remove("hidden");
+    if (!items.length) {
+      showStatus(T.noCandidates);
+      return;
+    }
+    for (const item of items) {
+      const card = document.createElement("article");
+      card.className = "candidate";
+      const head = document.createElement("div");
+      head.className = "candidate-head";
+      const title = document.createElement("div");
+      title.className = "candidate-title";
+      title.textContent = T.versionLabel + ": " + (item.versionName || "—")
+        + " (" + (item.versionCode || "—") + ")";
+      const message = document.createElement("div");
+      message.className = "candidate-message";
+      message.textContent = item.message || textForStatus(item.status);
+      head.appendChild(title);
+      card.appendChild(head);
+      card.appendChild(message);
+      if (item.apkSha256) {
+        const fingerprint = document.createElement("div");
+        fingerprint.className = "fingerprint";
+        fingerprint.textContent = T.hashLabel + ": " + item.apkSha256;
+        card.appendChild(fingerprint);
+      }
+      if (item.signerSha256) {
+        const signer = document.createElement("div");
+        signer.className = "fingerprint";
+        signer.textContent = T.signerLabel + ": " + item.signerSha256;
+        card.appendChild(signer);
+      }
+      if (item.status === "ready") {
+        const install = document.createElement("button");
+        install.type = "button";
+        install.textContent = T.installButton;
+        install.addEventListener("click", async () => {
+          install.disabled = true;
+          try {
+            const result = await api("install", { candidateId: item.id });
+            showStatus(result.message || T.installSent, "success");
+            polling = false;
+          } catch (error) {
+            showStatus(error.message || T.error, "error");
+            install.disabled = false;
+          }
+        });
+        card.appendChild(install);
+      }
+      candidatesNode.appendChild(card);
+    }
+  }
+  async function poll() {
+    while (polling) {
+      try {
+        const state = await api("status");
+        if (state.expired) {
+          polling = false;
+          showStatus(T.expired, "error");
+          return;
+        }
+        renderCandidates(state.candidates || []);
+        if (!state.working) polling = false;
+      } catch (error) {
+        polling = false;
+        showStatus(error.message || T.error, "error");
+      }
+      if (polling) await new Promise(resolve => setTimeout(resolve, 1800));
+    }
+  }
+  document.getElementById("title").textContent = T.title;
+  document.getElementById("intro").textContent = T.intro;
+  document.getElementById("pin-label").textContent = T.pinLabel;
+  document.getElementById("links-label").textContent = T.linksLabel;
+  document.getElementById("links-hint").textContent = T.linksHint;
+  document.getElementById("verify").textContent = T.verifyButton;
+  document.getElementById("check").textContent = T.submitButton;
+  document.getElementById("candidates-title").textContent = T.candidatesTitle;
+  document.getElementById("footer").textContent = T.intro;
+  document.getElementById("pairing-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!/^\d{6}$/.test(pin.value)) {
+      showStatus(T.enterPin, "error");
+      return;
+    }
+    showStatus(T.verifying);
+    try {
+      await api("verify");
+      paired = true;
+      document.getElementById("links-form").classList.remove("hidden");
+      document.getElementById("pairing-form").classList.add("hidden");
+      showStatus("");
+    } catch (error) {
+      showStatus(error.message || T.badPin, "error");
+    }
+  });
+  document.getElementById("links-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!paired) return;
+    const urls = document.getElementById("links").value
+      .split(/\r?\n/).map(value => value.trim()).filter(Boolean);
+    if (urls.length < 1 || urls.length > 5) {
+      showStatus(T.error, "error");
+      return;
+    }
+    document.getElementById("check").disabled = true;
+    showStatus(T.verifying);
+    try {
+      const state = await api("submit", { urls: urls });
+      renderCandidates(state.candidates || []);
+      polling = !!state.working;
+      if (polling) poll();
+      else showStatus(T.noCandidates);
+    } catch (error) {
+      showStatus(error.message || T.error, "error");
+      document.getElementById("check").disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

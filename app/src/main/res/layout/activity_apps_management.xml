@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/appsRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/settings_backdrop">
+
+    <LinearLayout
+        android:id="@+id/appsHeaderPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="38dp"
+        android:layout_marginTop="22dp"
+        android:layout_marginEnd="38dp"
+        android:background="@drawable/glass_panel"
+        android:elevation="4dp"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="16dp">
+
+        <TextView
+            android:id="@+id/appsTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:text="@string/apps_management"
+            android:textColor="@color/tvos_label_primary"
+            android:textSize="@dimen/tvos_text_title3"
+            android:fontFamily="sans-serif-black" />
+
+        <TextView
+            android:id="@+id/appsHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/apps_management_hint"
+            android:textColor="@color/tvos_label_secondary"
+            android:textSize="@dimen/tvos_text_caption1" />
+
+        <LinearLayout
+            android:id="@+id/folderActionsRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/createFolderChoice"
+                style="@style/SettingsRow"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/glass_pill_bg"
+                android:text="@string/create_folder" />
+
+            <TextView
+                android:id="@+id/manageFoldersChoice"
+                style="@style/SettingsRow"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@drawable/glass_pill_bg"
+                android:text="@string/manage_folders" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/dockActionsRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/showSelectedChoice"
+                style="@style/SettingsRow"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/glass_pill_bg"
+                android:text="@string/show_selected_apps" />
+
+            <TextView
+                android:id="@+id/hideSelectedChoice"
+                style="@style/SettingsRow"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@drawable/glass_pill_bg"
+                android:text="@string/hide_selected_apps" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginStart="38dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="38dp"
+        android:layout_marginBottom="22dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/appRows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:orientation="vertical"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp" />
+    </ScrollView>
+</LinearLayout>
