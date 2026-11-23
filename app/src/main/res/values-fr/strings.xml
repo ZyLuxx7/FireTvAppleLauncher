@@ -206,7 +206,7 @@
     <string name="launcher_update_web_intro">Connectez-vous au téléviseur avec le PIN à six chiffres. Envoyez jusqu’à cinq liens APK directs ; seul un APK du launcher signé avec la clé installée peut être choisi. Android demandera une confirmation sur le téléviseur.</string>
     <string name="launcher_update_web_pin">PIN affiché sur le téléviseur</string>
     <string name="launcher_update_web_links">Liens APK directs, un par ligne</string>
-    <string name="launcher_update_web_links_hint">Utilisez HTTPS ou une adresse HTTP directe sur le même Wi-Fi. Jusqu’à cinq liens seront vérifiés.</string>
+    <string name="launcher_update_web_links_hint">Utilisez HTTPS ou une adresse HTTP directe sur le même Wi-Fi. Les liens de téléchargement direct des versions GitHub sont acceptés (par exemple, https://github.com/owner/repo/releases/latest/download/launcher.apk) ; n’utilisez pas la page de la version ni l’aperçu du fichier. Jusqu’à cinq liens seront vérifiés.</string>
     <string name="launcher_update_web_verify">Connecter au téléviseur</string>
     <string name="launcher_update_web_check">Vérifier les liens APK</string>
     <string name="launcher_update_web_candidates">APK du launcher vérifiés</string>

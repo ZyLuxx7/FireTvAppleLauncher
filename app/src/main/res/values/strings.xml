@@ -601,7 +601,7 @@
     <string name="launcher_update_web_intro">Connect to the TV using the six-digit PIN. Submit up to five direct APK links; only a launcher APK with the installed signing key can be selected. Android will ask for confirmation on the TV.</string>
     <string name="launcher_update_web_pin">PIN shown on the TV</string>
     <string name="launcher_update_web_links">Direct APK links, one per line</string>
-    <string name="launcher_update_web_links_hint">Use HTTPS or a direct HTTP address on the same Wi-Fi network. Up to five links are checked.</string>
+    <string name="launcher_update_web_links_hint">Use HTTPS or a direct HTTP address on the same Wi-Fi. GitHub Releases download links are supported (for example, https://github.com/owner/repo/releases/latest/download/launcher.apk); do not use a release or file preview page. Up to five links are checked.</string>
     <string name="launcher_update_web_verify">Connect to TV</string>
     <string name="launcher_update_web_check">Check APK links</string>
     <string name="launcher_update_web_candidates">Verified launcher APKs</string>

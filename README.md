@@ -27,7 +27,7 @@ This Fire TV build uses the package ID `com.appletv.launcher.firetv`, so it can 
 - **Lyrics:** optional lyric providers, including LRCLIB. A lyrics lookup can send the track title, artist, album, and duration to LRCLIB.
 - **Spotify and audio routing:** experimental Spotify Connect discovery and audio-output controls. Device discovery depends on the TV, Spotify, and local network.
 - **Quick controls:** launcher settings, network and audio controls, and TV power options where supported by the device.
-- **Launcher updates:** a TV-displayed QR code opens a same-Wi-Fi updater with a one-time token and PIN. It checks up to five direct links and offers only APKs matching the installed package, signing key, and version; Android still asks for installation confirmation on the TV.
+- **Launcher updates:** a TV-displayed QR code opens a same-Wi-Fi updater with a one-time token and PIN. It checks up to five direct links, including GitHub Releases APK download links (not release pages or file previews), and offers only APKs matching the installed package, signing key, and version; Android still asks for installation confirmation on the TV.
 - **Appearance:** themes, wallpaper choices, focus-glass effects, and English, German, French, and Spanish UI strings.
 - **Permission status:** settings show the state of supported accessibility services and the equalizer's audio permission.
 
