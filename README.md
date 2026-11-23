@@ -12,11 +12,23 @@ This Fire TV build uses the package ID `com.appletv.launcher.firetv`, so it can 
 
 ## Screenshots
 
-| Home screen | Recent apps | Control center |
-|---|---|---|
-| ![Home screen](docs/Homescreen.png) | ![Recent apps](docs/RecentTab.png) | ![Control center](docs/Control_Center.png) |
+These are captures from our Fire TV launcher build; the interface can vary by device and installed apps.
 
-![Home dock and app row](docs/HomeScreenRow.png)
+| Home screen | App management | Launcher settings |
+|---|---|---|
+| ![Our Fire TV launcher home screen](docs/Homescreen.png) | ![Our app management screen](docs/AppManagement.png) | ![Our launcher settings screen](docs/Settings.png) |
+
+## Downloads
+
+**[Latest experimental release](https://github.com/ZyLuxx7/FireTvAppleLauncher/releases/latest)**
+
+| APK | Package | Download |
+|---|---|---|
+| Apple TV Launcher | `com.appletv.launcher.firetv` | [AppleTVLauncher.apk](https://github.com/ZyLuxx7/FireTvAppleLauncher/releases/latest/download/AppleTVLauncher.apk) |
+| Apple TV Switcher (Home Redirect) | `de.gabri.firetvhomehelper` | [AppleTVSwitcher.apk](https://github.com/ZyLuxx7/FireTvAppleLauncher/releases/latest/download/AppleTVSwitcher.apk) |
+| Apple TV Background Cleaner | `de.gabri.firetvcleaner` | [AppleTVBackgroundCleaner.apk](https://github.com/ZyLuxx7/FireTvAppleLauncher/releases/latest/download/AppleTVBackgroundCleaner.apk) |
+
+To update the launcher from the TV, open **Settings → Updates → Launcher Update** and scan the QR code. The phone page pre-fills the latest launcher APK link; tap **Check APK links**, select the verified launcher, and confirm installation on the TV. The built-in updater accepts only launcher APKs; install the Switcher and Background Cleaner as separate apps. These experimental APKs are signed with the same local debug key, so updates require a matching signing certificate. Android still asks for installation confirmation.
 
 ## Features
 
@@ -27,7 +39,7 @@ This Fire TV build uses the package ID `com.appletv.launcher.firetv`, so it can 
 - **Lyrics:** optional lyric providers, including LRCLIB. A lyrics lookup can send the track title, artist, album, and duration to LRCLIB.
 - **Spotify and audio routing:** experimental Spotify Connect discovery and audio-output controls. Device discovery depends on the TV, Spotify, and local network.
 - **Quick controls:** launcher settings, network and audio controls, and TV power options where supported by the device.
-- **Launcher updates:** a TV-displayed QR code opens a same-Wi-Fi updater with a one-time token and PIN. It checks up to five direct links, including GitHub Releases APK download links (not release pages or file previews), and offers only APKs matching the installed package, signing key, and version; Android still asks for installation confirmation on the TV.
+- **Launcher updates:** a TV-displayed QR code opens a same-Wi-Fi updater with a one-time token and PIN. It checks up to five direct links, including the [latest GitHub launcher APK](https://github.com/ZyLuxx7/FireTvAppleLauncher/releases/latest/download/AppleTVLauncher.apk), and offers only APKs matching the installed package, signing key, and version; Android still asks for installation confirmation on the TV.
 - **Appearance:** themes, wallpaper choices, focus-glass effects, and English, German, French, and Spanish UI strings.
 - **Permission status:** settings show the state of supported accessibility services and the equalizer's audio permission.
 
