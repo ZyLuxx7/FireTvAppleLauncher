@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/glass_panel"
+    android:orientation="vertical"
+    android:padding="26dp">
+
+    <TextView
+        android:id="@+id/updateTermsTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-bold"
+        android:text="@string/update_terms_title"
+        android:textColor="@color/tvos_label_primary"
+        android:textSize="26sp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="330dp"
+        android:layout_marginTop="14dp"
+        android:overScrollMode="never"
+        android:scrollbars="vertical">
+
+        <TextView
+            android:id="@+id/updateTermsBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="5sp"
+            android:textColor="@color/tvos_label_primary"
+            android:textSize="16sp" />
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/updateTermsClose"
+        style="@style/AlertButton"
+        android:layout_marginTop="14dp"
+        android:text="@string/update_terms_close" />
+</LinearLayout>

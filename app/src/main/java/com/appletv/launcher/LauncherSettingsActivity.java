@@ -298,6 +298,8 @@ public final class LauncherSettingsActivity extends LauncherActivity {
                 open(new Intent(Settings.ACTION_DEVICE_INFO_SETTINGS)));
         findViewById(R.id.settingsLauncherUpdateChoice).setOnClickListener(v ->
                 startActivity(new Intent(this, LauncherUpdateActivity.class)));
+        findViewById(R.id.settingsUpdateTermsChoice).setOnClickListener(v ->
+                LauncherUpdateDialogs.showTermsDialog(this));
         findViewById(R.id.airPlayTvSettingsChoice).setOnClickListener(v -> openTvSettings());
         findViewById(R.id.audioOutputChoice).setOnClickListener(v ->
                 startActivity(new Intent(this, AudioOutputActivity.class)));

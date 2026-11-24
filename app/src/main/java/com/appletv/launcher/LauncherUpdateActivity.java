@@ -6,6 +6,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,6 +15,7 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public final class LauncherUpdateActivity extends LauncherActivity
@@ -46,8 +49,9 @@ public final class LauncherUpdateActivity extends LauncherActivity
             LauncherUpdateServer current = server;
             if (current != null && current.isExpired()) {
                 stopServer();
-                showSessionExpired();
+                if (activityStarted) showSessionExpired();
             } else if (current != null) {
+                if (activityStarted) updateSessionDisplay();
                 handler.postDelayed(this, 1000);
             }
         }
@@ -59,8 +63,16 @@ public final class LauncherUpdateActivity extends LauncherActivity
     private TextView pin;
     private TextView address;
     private TextView phoneHint;
+    private TextView connection;
+    private TextView countdown;
+    private TextView transferTitle;
+    private TextView transferMessage;
     private TextView allowSources;
     private TextView newSession;
+    private View sessionPanel;
+    private View connectionDot;
+    private View transferPanel;
+    private ProgressBar transferProgress;
     private ImageView qr;
     private LauncherUpdateServer server;
     private LauncherUpdateServer.InstallCandidate pendingInstall;
@@ -68,6 +80,7 @@ public final class LauncherUpdateActivity extends LauncherActivity
     private long installedVersionBefore;
     private boolean waitingForUnknownSources;
     private boolean activityStarted;
+    private boolean keepServerForPhoneResult;
     private String currentSessionPin;
 
     @Override
@@ -80,8 +93,16 @@ public final class LauncherUpdateActivity extends LauncherActivity
         pin = findViewById(R.id.launcherUpdatePin);
         address = findViewById(R.id.launcherUpdateAddress);
         phoneHint = findViewById(R.id.launcherUpdatePhoneHint);
+        connection = findViewById(R.id.launcherUpdateConnection);
+        countdown = findViewById(R.id.launcherUpdateCountdown);
+        transferTitle = findViewById(R.id.launcherUpdateTransferTitle);
+        transferMessage = findViewById(R.id.launcherUpdateTransferMessage);
         allowSources = findViewById(R.id.launcherUpdateAllowSources);
         newSession = findViewById(R.id.launcherUpdateNewSession);
+        sessionPanel = findViewById(R.id.launcherUpdateSessionPanel);
+        connectionDot = findViewById(R.id.launcherUpdateConnectionDot);
+        transferPanel = findViewById(R.id.launcherUpdateTransferPanel);
+        transferProgress = findViewById(R.id.launcherUpdateTransferProgress);
         qr = findViewById(R.id.launcherUpdateQr);
 
         findViewById(R.id.launcherUpdateBack).setOnClickListener(view -> finish());
@@ -102,6 +123,7 @@ public final class LauncherUpdateActivity extends LauncherActivity
         activityStarted = true;
         if (server != null) {
             handler.removeCallbacks(sessionWatchdog);
+            updateSessionDisplay();
             handler.postDelayed(sessionWatchdog, 1000);
         }
     }
@@ -115,8 +137,13 @@ public final class LauncherUpdateActivity extends LauncherActivity
     @Override
     protected void onStop() {
         activityStarted = false;
-        handler.removeCallbacks(sessionWatchdog);
-        stopServer();
+        if (pendingInstall == null && !keepServerForPhoneResult) {
+            handler.removeCallbacks(sessionWatchdog);
+            stopServer();
+        } else if (server != null) {
+            handler.removeCallbacks(sessionWatchdog);
+            handler.postDelayed(sessionWatchdog, 1000);
+        }
         super.onStop();
     }
 
@@ -137,16 +164,24 @@ public final class LauncherUpdateActivity extends LauncherActivity
 
     @Override
     public void onInstallRequested(LauncherUpdateServer.InstallCandidate candidate) {
-        handler.post(() -> beginInstall(candidate));
+        handler.postDelayed(() -> beginInstall(candidate), 450);
+    }
+
+    @Override
+    public void onClientConnected() {
+        handler.post(this::updateSessionDisplay);
     }
 
     private void startUpdateSession() {
         stopServer();
+        keepServerForPhoneResult = false;
         qr.setImageDrawable(null);
         qr.setVisibility(View.GONE);
         pin.setVisibility(View.GONE);
         address.setVisibility(View.GONE);
         phoneHint.setVisibility(View.GONE);
+        sessionPanel.setVisibility(View.GONE);
+        transferPanel.setVisibility(View.GONE);
         allowSources.setVisibility(View.GONE);
         newSession.setVisibility(View.GONE);
         title.setText(R.string.launcher_update_title);
@@ -166,14 +201,17 @@ public final class LauncherUpdateActivity extends LauncherActivity
             pin.setVisibility(View.VISIBLE);
             address.setVisibility(View.VISIBLE);
             phoneHint.setVisibility(View.VISIBLE);
+            sessionPanel.setVisibility(View.VISIBLE);
             newSession.setVisibility(View.VISIBLE);
             status.setText(R.string.launcher_update_status_waiting);
+            updateSessionDisplay();
             handler.removeCallbacks(sessionWatchdog);
             handler.postDelayed(sessionWatchdog, 1000);
             newSession.requestFocus();
         } catch (IOException | WriterException | SecurityException exception) {
             Log.e(TAG, "Could not start the local launcher update session", exception);
             stopServer();
+            sessionPanel.setVisibility(View.GONE);
             status.setText(R.string.launcher_update_status_error);
             newSession.setVisibility(View.VISIBLE);
             newSession.requestFocus();
@@ -228,12 +266,20 @@ public final class LauncherUpdateActivity extends LauncherActivity
         }
         if (installing) {
             status.setText(R.string.launcher_update_status_installing);
+            showTransferPanel(R.string.launcher_update_transfer_title,
+                    status.getText().toString(), true);
         } else if (working) {
             status.setText(R.string.launcher_update_status_working);
+            showTransferPanel(R.string.launcher_update_transfer_title,
+                    status.getText().toString(), true);
         } else if (ready > 0) {
             status.setText(getString(R.string.launcher_update_status_ready, ready));
+            showTransferPanel(R.string.launcher_update_transfer_title,
+                    status.getText().toString(), false);
         } else if (!candidates.isEmpty() && errors == candidates.size()) {
             status.setText(R.string.launcher_update_web_no_candidates);
+            showTransferPanel(R.string.launcher_update_transfer_title,
+                    status.getText().toString(), false);
         }
     }
 
@@ -242,13 +288,14 @@ public final class LauncherUpdateActivity extends LauncherActivity
         pendingInstall = candidate;
         expectedVersionCode = candidate.verifiedApk.versionCode;
         installedVersionBefore = installedVersionCode();
-        stopServer();
         qr.setVisibility(View.GONE);
         pin.setVisibility(View.GONE);
         address.setVisibility(View.GONE);
         phoneHint.setVisibility(View.GONE);
         newSession.setVisibility(View.GONE);
         status.setText(R.string.launcher_update_status_installing);
+        showTransferPanel(R.string.launcher_update_transfer_title,
+                status.getText().toString(), true);
         if (!canRequestPackageInstalls()) {
             showUnknownSourcesRequired();
             openUnknownSourcesSettings();
@@ -275,6 +322,8 @@ public final class LauncherUpdateActivity extends LauncherActivity
         } catch (ActivityNotFoundException | IllegalArgumentException | SecurityException exception) {
             Log.e(TAG, "Could not open the verified launcher APK in Android's installer", exception);
             status.setText(R.string.launcher_update_install_failed);
+            if (server != null) server.setInstallResult("failed");
+            finishInstallHandoff();
             deletePendingFile();
             pendingInstall = null;
             newSession.setVisibility(View.VISIBLE);
@@ -287,14 +336,20 @@ public final class LauncherUpdateActivity extends LauncherActivity
         boolean versionMatches = installedVersion >= expectedVersionCode;
         boolean installed = versionMatches
                 && (resultCode == RESULT_OK || installedVersion > installedVersionBefore);
+        if (server != null) server.setInstallResult(installed ? "installed" : "cancelled");
+        finishInstallHandoff();
         deletePendingFile();
         pendingInstall = null;
         expectedVersionCode = 0;
         if (installed) {
             status.setText(R.string.launcher_update_install_success);
+            showTransferPanel(R.string.launcher_update_transfer_title,
+                    status.getText().toString(), false);
             handler.postDelayed(this::reopenLauncher, 900);
         } else {
             status.setText(R.string.launcher_update_install_cancelled);
+            showTransferPanel(R.string.launcher_update_transfer_title,
+                    status.getText().toString(), false);
             newSession.setVisibility(View.VISIBLE);
             newSession.requestFocus();
         }
@@ -328,6 +383,8 @@ public final class LauncherUpdateActivity extends LauncherActivity
         phoneHint.setVisibility(View.GONE);
         allowSources.setVisibility(View.VISIBLE);
         newSession.setVisibility(View.VISIBLE);
+        showTransferPanel(R.string.launcher_update_transfer_title,
+                getString(R.string.launcher_update_install_source_message), false);
         allowSources.requestFocus();
     }
 
@@ -368,12 +425,60 @@ public final class LauncherUpdateActivity extends LauncherActivity
         pin.setVisibility(View.GONE);
         address.setVisibility(View.GONE);
         phoneHint.setVisibility(View.GONE);
+        connection.setText(R.string.launcher_update_session_expired);
+        countdown.setText(getString(R.string.launcher_update_countdown_format, "00:00"));
         status.setText(R.string.launcher_update_status_expired);
         newSession.setVisibility(View.VISIBLE);
         newSession.requestFocus();
     }
 
+    private void updateSessionDisplay() {
+        LauncherUpdateServer current = server;
+        if (current == null || connection == null || countdown == null) return;
+        boolean connected = current.isClientConnected();
+        connection.setText(connected
+                ? R.string.launcher_update_session_connected
+                : R.string.launcher_update_session_waiting);
+        GradientDrawable dot = new GradientDrawable();
+        dot.setShape(GradientDrawable.OVAL);
+        dot.setColor(connected ? 0xFF52D6BA : 0xFFFFC45C);
+        connectionDot.setBackground(dot);
+        long remaining = current.getRemainingSessionMillis();
+        if (remaining < 0) {
+            countdown.setText(R.string.launcher_update_session_countdown_paused);
+        } else {
+            long totalSeconds = (remaining + 999) / 1000;
+            String formatted = String.format(Locale.getDefault(), "%02d:%02d",
+                    totalSeconds / 60, totalSeconds % 60);
+            countdown.setText(getString(R.string.launcher_update_countdown_format, formatted));
+        }
+    }
+
+    private void showTransferPanel(int titleResource, int messageResource, boolean inProgress) {
+        showTransferPanel(titleResource, getString(messageResource), inProgress);
+    }
+
+    private void showTransferPanel(int titleResource, String message, boolean inProgress) {
+        transferPanel.setVisibility(View.VISIBLE);
+        transferTitle.setText(titleResource);
+        transferMessage.setText(message);
+        transferProgress.setVisibility(inProgress ? View.VISIBLE : View.GONE);
+    }
+
+    private void finishInstallHandoff() {
+        LauncherUpdateServer current = server;
+        if (current == null) return;
+        keepServerForPhoneResult = true;
+        handler.postDelayed(() -> {
+            if (server == current) {
+                keepServerForPhoneResult = false;
+                stopServer();
+            }
+        }, 20_000);
+    }
+
     private void stopServer() {
+        handler.removeCallbacks(sessionWatchdog);
         if (server == null) return;
         server.stop();
         server = null;

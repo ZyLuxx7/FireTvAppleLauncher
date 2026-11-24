@@ -442,6 +442,7 @@
                         android:layout_marginTop="8dp" />
                     <TextView android:id="@+id/settingsSoftwareUpdatesChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="16dp" android:text="@string/settings_software_updates" />
                     <TextView android:id="@+id/settingsLauncherUpdateChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/settings_launcher_update" />
+                    <TextView android:id="@+id/settingsUpdateTermsChoice" style="@style/SettingsNavigationRow" android:layout_marginTop="4dp" android:text="@string/settings_update_terms" />
                 </LinearLayout>
             </ScrollView>
 

@@ -168,6 +168,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     static int COLUMNS = 4;
     private boolean rtlAppGrid;
     private static final long MINUTE_MS = 60_000L;
+    private static final long LAUNCHER_RELEASE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000L;
     private String liveTvPkg;
     private String liveTvAction;
     private String inputAction;
@@ -233,6 +234,10 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     private ExecutorService spotifyPlaybackExecutor;
     private boolean spotifyPlaybackRequestRunning;
     private boolean homeResumed;
+    private boolean releaseCheckStarted;
+    private boolean updateTermsDialogShowing;
+    private boolean updateAvailableDialogShowing;
+    private LauncherReleaseChecker.Release pendingLauncherRelease;
     private long spotifyPlaybackRequestGeneration;
     private volatile long lyricsRequestGeneration;
     private String spotifyPlaybackClientId;
@@ -341,6 +346,15 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     private final Runnable welcomeDismiss = this::hideWelcomeOverlay;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable launcherReleaseCheckTick = new Runnable() {
+        @Override
+        public void run() {
+            if (!homeResumed || isFinishing() || isDestroyed()) return;
+            releaseCheckStarted = false;
+            checkForLauncherUpdate();
+            handler.postDelayed(this, LAUNCHER_RELEASE_CHECK_INTERVAL_MS);
+        }
+    };
     private final Runnable homeScreensaverIdle = this::showHomeScreensaver;
     private final Runnable homeScreensaverTick = new Runnable() {
         @Override
@@ -1155,6 +1169,54 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
             }
         }
         scheduleHomeScreensaver();
+        maybeShowLauncherUpdateDisclosure();
+        handler.removeCallbacks(launcherReleaseCheckTick);
+        handler.postDelayed(launcherReleaseCheckTick, LAUNCHER_RELEASE_CHECK_INTERVAL_MS);
+    }
+
+    private void maybeShowLauncherUpdateDisclosure() {
+        if (!homeResumed || isFinishing() || isDestroyed()) return;
+        if (!LauncherUpdateDialogs.areCurrentTermsAccepted(this)) {
+            if (updateTermsDialogShowing) return;
+            updateTermsDialogShowing = true;
+            LauncherUpdateDialogs.showVersionNotice(this,
+                    () -> {
+                        updateTermsDialogShowing = false;
+                        checkForLauncherUpdate();
+                        showPendingLauncherUpdate();
+                    },
+                    () -> updateTermsDialogShowing = false);
+            return;
+        }
+        checkForLauncherUpdate();
+        showPendingLauncherUpdate();
+    }
+
+    private void checkForLauncherUpdate() {
+        if (!homeResumed || isFinishing() || isDestroyed() || releaseCheckStarted
+                || !LauncherUpdateDialogs.areCurrentTermsAccepted(this)) return;
+        releaseCheckStarted = true;
+        LauncherReleaseChecker.checkIfDue(this, release -> {
+            if (release != null) pendingLauncherRelease = release;
+            showPendingLauncherUpdate();
+        });
+    }
+
+    private void showPendingLauncherUpdate() {
+        if (!homeResumed || isFinishing() || isDestroyed() || updateAvailableDialogShowing
+                || pendingLauncherRelease == null
+                || !LauncherUpdateDialogs.areCurrentTermsAccepted(this)) return;
+        LauncherReleaseChecker.Release release = pendingLauncherRelease;
+        pendingLauncherRelease = null;
+        updateAvailableDialogShowing = true;
+        boolean shown = LauncherUpdateDialogs.showAvailableUpdate(this, release,
+                () -> {
+                    if (homeResumed && !isFinishing() && !isDestroyed()) {
+                        startActivity(new Intent(this, LauncherUpdateActivity.class));
+                    }
+                },
+                () -> updateAvailableDialogShowing = false);
+        if (!shown) updateAvailableDialogShowing = false;
     }
 
     @Override
@@ -2396,6 +2458,8 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     protected void onPause() {
         super.onPause();
         homeResumed = false;
+        releaseCheckStarted = false;
+        handler.removeCallbacks(launcherReleaseCheckTick);
         if (homePlayerTitleRow != null) {
             homePlayerTitleRow.setIndicatorPlaying(false, false);
             homePlayerTitleRow.setMarqueeEnabled(false);

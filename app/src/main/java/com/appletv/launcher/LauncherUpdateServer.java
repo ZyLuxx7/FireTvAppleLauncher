@@ -36,6 +36,7 @@ final class LauncherUpdateServer extends NanoHTTPD {
     interface Listener {
         void onCandidatesChanged(List<CandidateSnapshot> candidates);
         void onInstallRequested(InstallCandidate candidate);
+        void onClientConnected();
     }
 
     private final Context context;
@@ -56,6 +57,8 @@ final class LauncherUpdateServer extends NanoHTTPD {
     private boolean batchSubmitted;
     private boolean batchRunning;
     private boolean installRequested;
+    private boolean clientConnected;
+    private String installState = "none";
     private boolean expired;
     private boolean stopped;
     private File preservedFile;
@@ -103,11 +106,30 @@ final class LauncherUpdateServer extends NanoHTTPD {
     boolean isExpired() {
         synchronized (lock) {
             if (!expired && !stopped && !batchRunning
-                    && SystemClock.elapsedRealtime() - lastActivityAt
-                    >= SESSION_IDLE_TIMEOUT_MS) {
+                    && remainingSessionMillisLocked(SystemClock.elapsedRealtime()) == 0) {
                 expired = true;
             }
             return expired || stopped;
+        }
+    }
+
+    boolean isClientConnected() {
+        synchronized (lock) {
+            return clientConnected;
+        }
+    }
+
+    long getRemainingSessionMillis() {
+        synchronized (lock) {
+            if (expired || stopped) return 0;
+            if (batchRunning) return -1;
+            return remainingSessionMillisLocked(SystemClock.elapsedRealtime());
+        }
+    }
+
+    void setInstallResult(String result) {
+        synchronized (lock) {
+            installState = result;
         }
     }
 
@@ -144,7 +166,10 @@ final class LauncherUpdateServer extends NanoHTTPD {
                         error(context.getString(R.string.launcher_update_web_bad_pin)));
             }
             if ("verify".equals(action)) {
-                touchUserActivity();
+                synchronized (lock) {
+                    clientConnected = true;
+                }
+                if (listener != null) listener.onClientConnected();
                 return jsonResponse(Response.Status.OK, new JSONObject().put("ok", true));
             }
             if ("submit".equals(action)) return submitCandidates(request);
@@ -225,12 +250,6 @@ final class LauncherUpdateServer extends NanoHTTPD {
             if (countAsUserActivity) lastActivityAt = SystemClock.elapsedRealtime();
         }
         return true;
-    }
-
-    private void touchUserActivity() {
-        synchronized (lock) {
-            lastActivityAt = SystemClock.elapsedRealtime();
-        }
     }
 
     private Response submitCandidates(JSONObject request) throws JSONException, IOException {
@@ -371,6 +390,7 @@ final class LauncherUpdateServer extends NanoHTTPD {
                         error(context.getString(R.string.launcher_update_web_not_ready)));
             }
             installRequested = true;
+            installState = "pending";
             candidate.status = CandidateStatus.INSTALLING;
             candidate.message = context.getString(R.string.launcher_update_web_installing);
             preservedFile = candidate.file;
@@ -395,13 +415,23 @@ final class LauncherUpdateServer extends NanoHTTPD {
         JSONArray items = new JSONArray();
         synchronized (lock) {
             for (CandidateState candidate : candidates) items.put(candidate.toJson());
+            long now = SystemClock.elapsedRealtime();
             return new JSONObject()
                     .put("ok", true)
                     .put("expired", expired || stopped)
+                    .put("connected", clientConnected)
+                    .put("remainingMs", expired || stopped ? 0
+                            : batchRunning ? -1 : remainingSessionMillisLocked(now))
+                    .put("installState", installState)
                     .put("submitted", batchSubmitted)
                     .put("working", batchRunning)
                     .put("candidates", items);
         }
+    }
+
+    private long remainingSessionMillisLocked(long now) {
+        long idleMillis = now - lastActivityAt;
+        return Math.max(0, SESSION_IDLE_TIMEOUT_MS - idleMillis);
     }
 
     private JSONObject error(String message) {
@@ -500,6 +530,15 @@ final class LauncherUpdateServer extends NanoHTTPD {
         page = replace(page, "QUEUED", R.string.launcher_update_web_queued);
         page = replace(page, "DOWNLOADING", R.string.launcher_update_web_downloading);
         page = replace(page, "INSTALLING", R.string.launcher_update_web_installing);
+        page = replace(page, "CONNECTED", R.string.launcher_update_web_connected);
+        page = replace(page, "WAITING", R.string.launcher_update_web_waiting);
+        page = replace(page, "COUNTDOWN", R.string.launcher_update_web_countdown);
+        page = replace(page, "PROCESSING", R.string.launcher_update_web_processing);
+        page = replace(page, "INSTALL_UNKNOWN", R.string.launcher_update_web_install_unknown);
+        page = replace(page, "INSTALL_COMPLETE", R.string.launcher_update_web_install_complete);
+        page = replace(page, "INSTALL_CANCELLED", R.string.launcher_update_web_install_cancelled);
+        page = replace(page, "INSTALL_FAILED", R.string.launcher_update_web_install_failed);
+        page = replace(page, "FOOTER", R.string.launcher_update_web_footer);
         return page;
     }
 

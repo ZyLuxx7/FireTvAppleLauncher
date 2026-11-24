@@ -10,14 +10,14 @@ android {
         applicationId "com.appletv.launcher.firetv"
         minSdk 28
         targetSdk 34
-        versionCode 6
-        versionName "1.0.0-firetv"
+        versionCode 7
+        versionName "1.0.1-firetv"
         resConfigs "en", "de", "fr", "es"
     }
 
     signingConfigs {
         release {
-            storeFile file('debug.keystore')
+            storeFile project.file(project.findProperty('releaseKeystore') ?: 'debug.keystore')
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'

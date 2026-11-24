@@ -17,66 +17,134 @@
     body {
       min-height: 100vh;
       margin: 0;
-      padding: clamp(18px, 5vw, 56px);
+      padding: clamp(16px, 5vw, 56px);
       background:
-        radial-gradient(ellipse at 18% 0%, rgba(91, 112, 199, .25), transparent 48%),
-        radial-gradient(ellipse at 90% 100%, rgba(69, 183, 174, .16), transparent 42%),
+        radial-gradient(ellipse at 18% 0%, rgba(91, 112, 199, .28), transparent 48%),
+        radial-gradient(ellipse at 90% 100%, rgba(69, 183, 174, .18), transparent 42%),
         #080a0f;
     }
     main { width: min(760px, 100%); margin: 0 auto; }
-    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
-    .brand { display: flex; align-items: center; gap: 12px; font-weight: 650; letter-spacing: .01em; }
-    .brand-mark {
-      display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px;
-      background: linear-gradient(145deg, rgba(255,255,255,.25), rgba(255,255,255,.06));
-      border: 1px solid rgba(255,255,255,.2); box-shadow: 0 8px 26px rgba(0,0,0,.25);
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
     }
-    .local-tag { color: #a7e7dc; font-size: .78rem; padding: 8px 12px; border-radius: 999px;
-      border: 1px solid rgba(143,227,216,.25); background: rgba(68,160,151,.12); }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 680; letter-spacing: .01em; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
+      background: linear-gradient(145deg, rgba(255,255,255,.25), rgba(255,255,255,.06));
+      border: 1px solid rgba(255,255,255,.2);
+      box-shadow: 0 8px 26px rgba(0,0,0,.25);
+    }
+    .local-tag {
+      color: #a7e7dc;
+      font-size: .75rem;
+      letter-spacing: .1em;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(143,227,216,.25);
+      background: rgba(68,160,151,.12);
+      white-space: nowrap;
+    }
     .panel {
-      border: 1px solid rgba(255,255,255,.12); border-radius: 26px; padding: clamp(22px, 5vw, 38px);
-      background: linear-gradient(145deg, rgba(31,34,43,.86), rgba(16,18,24,.9));
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 28px;
+      padding: clamp(22px, 5vw, 38px);
+      background: linear-gradient(145deg, rgba(31,34,43,.86), rgba(16,18,24,.92));
       box-shadow: 0 22px 70px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.08);
+      backdrop-filter: blur(26px);
+      -webkit-backdrop-filter: blur(26px);
     }
     h1 { font-size: clamp(1.7rem, 5vw, 2.45rem); line-height: 1.12; margin: 0 0 10px; }
+    h2 { font-size: 1.1rem; margin: 26px 0 0; }
     .intro, .hint { color: #aeb2bd; line-height: 1.55; }
-    .intro { margin: 0 0 26px; }
-    label { display: block; font-size: .88rem; font-weight: 620; margin: 18px 0 8px; }
+    .intro { margin: 0 0 22px; }
+    label { display: block; font-size: .88rem; font-weight: 650; margin: 18px 0 8px; }
     input, textarea {
-      width: 100%; color: #f6f7fb; font: inherit; border-radius: 14px; padding: 14px 15px;
-      border: 1px solid rgba(255,255,255,.16); background: rgba(0,0,0,.25); outline: none;
+      width: 100%;
+      color: #f6f7fb;
+      font: inherit;
+      border-radius: 15px;
+      padding: 14px 15px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.25);
+      outline: none;
     }
     input:focus, textarea:focus { border-color: #83d2ca; box-shadow: 0 0 0 3px rgba(131,210,202,.13); }
     input { letter-spacing: .24em; max-width: 230px; }
     textarea { min-height: 138px; resize: vertical; letter-spacing: normal; }
     button {
-      border: 0; border-radius: 14px; padding: 14px 19px; color: #081012; font: inherit;
-      font-weight: 700; background: linear-gradient(120deg, #a4e7df, #7acbc2);
-      cursor: pointer; box-shadow: 0 8px 26px rgba(68,173,165,.18);
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 19px;
+      color: #081012;
+      font: inherit;
+      font-weight: 720;
+      background: linear-gradient(120deg, #a4e7df, #7acbc2);
+      cursor: pointer;
+      box-shadow: 0 8px 26px rgba(68,173,165,.18);
+      transition: transform .18s ease, filter .18s ease;
     }
+    button:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
     button:disabled { opacity: .48; cursor: not-allowed; }
-    .secondary { color: #f5f6fa; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.14); box-shadow: none; }
-    .status { min-height: 26px; margin: 16px 0 0; color: #c5cad5; }
+    .secondary {
+      color: #f5f6fa;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: none;
+    }
+    .session-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 15px;
+      margin: 0 0 20px;
+      border: 1px solid rgba(143,227,216,.2);
+      border-radius: 16px;
+      background: linear-gradient(120deg, rgba(68,160,151,.15), rgba(255,255,255,.035));
+    }
+    .session-dot { width: 10px; height: 10px; border-radius: 50%; background: #52d6ba; box-shadow: 0 0 14px rgba(82,214,186,.6); }
+    .session-copy { display: grid; gap: 3px; flex: 1; }
+    .session-copy strong { font-size: .9rem; }
+    .session-copy small { color: #aeb2bd; }
+    .session-time { color: #b7f0e7; font: 650 .82rem/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .status { min-height: 26px; margin: 16px 0 0; color: #c5cad5; line-height: 1.5; }
     .status.error { color: #ffaaa8; }
     .status.success { color: #9ce5d8; }
-    .candidate-list { display: grid; gap: 12px; margin-top: 20px; }
+    .status.warning { color: #ffd58a; }
+    .candidate-list { display: grid; gap: 12px; margin-top: 15px; }
     .candidate {
-      border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 17px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      padding: 17px;
       background: rgba(255,255,255,.045);
     }
     .candidate-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .candidate-title { font-weight: 680; overflow-wrap: anywhere; }
-    .candidate-message { color: #aeb2bd; font-size: .9rem; margin-top: 7px; }
-    .fingerprint { color: #858b98; font: .72rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
-      overflow-wrap: anywhere; margin-top: 11px; }
+    .candidate-message { color: #aeb2bd; font-size: .9rem; line-height: 1.45; margin-top: 7px; }
+    .fingerprint {
+      color: #858b98;
+      font: .72rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+      overflow-wrap: anywhere;
+      margin-top: 11px;
+    }
     .candidate button { margin-top: 14px; }
     .hidden { display: none !important; }
     footer { color: #858b98; font-size: .78rem; line-height: 1.5; margin: 18px 4px 0; }
     @media (max-width: 520px) {
       body { padding: 16px; }
       header { align-items: flex-start; }
-      .local-tag { font-size: .68rem; }
-      .panel { border-radius: 22px; }
+      .local-tag { font-size: .65rem; }
+      .panel { border-radius: 23px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
     }
   </style>
 </head>
@@ -89,9 +157,14 @@
   <section class="panel">
     <h1 id="title"></h1>
     <p class="intro" id="intro"></p>
+    <div class="session-card hidden" id="session-card" role="status" aria-live="polite">
+      <span class="session-dot" aria-hidden="true"></span>
+      <span class="session-copy"><strong id="session-state"></strong><small id="session-countdown"></small></span>
+      <span class="session-time" id="session-time"></span>
+    </div>
     <form id="pairing-form">
       <label id="pin-label" for="pin"></label>
-      <input id="pin" inputmode="numeric" autocomplete="off" maxlength="6" type="password" required>
+      <input id="pin" inputmode="numeric" autocomplete="one-time-code" maxlength="6" type="password" required>
       <button class="secondary" id="verify" type="submit"></button>
     </form>
     <form id="links-form" class="hidden">
@@ -132,7 +205,16 @@
     ready: {{READY}},
     queued: {{QUEUED}},
     downloading: {{DOWNLOADING}},
-    installing: {{INSTALLING}}
+    installing: {{INSTALLING}},
+    connected: {{CONNECTED}},
+    waiting: {{WAITING}},
+    countdown: {{COUNTDOWN}},
+    processing: {{PROCESSING}},
+    installUnknown: {{INSTALL_UNKNOWN}},
+    installComplete: {{INSTALL_COMPLETE}},
+    installCancelled: {{INSTALL_CANCELLED}},
+    installFailed: {{INSTALL_FAILED}},
+    footer: {{FOOTER}}
   };
   const base = location.pathname.replace(/\/$/, "");
   const pin = document.getElementById("pin");
@@ -140,6 +222,8 @@
   const candidatesNode = document.getElementById("candidates");
   let paired = false;
   let polling = false;
+  let installPending = false;
+  let candidateSignature = "";
 
   function showStatus(text, kind) {
     statusNode.textContent = text || "";
@@ -153,7 +237,11 @@
       body: JSON.stringify(Object.assign({ action: action, pin: pin.value }, extra || {}))
     });
     const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.message || T.error);
+    if (!response.ok || !data.ok) {
+      const error = new Error(data.message || T.error);
+      error.httpStatus = response.status;
+      throw error;
+    }
     return data;
   }
   function textForStatus(status) {
@@ -163,7 +251,26 @@
     if (status === "installing") return T.installing;
     return T.error;
   }
+  function updateSession(state) {
+    const card = document.getElementById("session-card");
+    card.classList.remove("hidden");
+    document.getElementById("session-state").textContent = state.connected ? T.connected : T.waiting;
+    const remaining = Number(state.remainingMs);
+    if (remaining < 0) {
+      document.getElementById("session-countdown").textContent = T.processing;
+      document.getElementById("session-time").textContent = "•••";
+    } else {
+      const seconds = Math.max(0, Math.ceil(remaining / 1000));
+      const time = String(Math.floor(seconds / 60)).padStart(2, "0")
+        + ":" + String(seconds % 60).padStart(2, "0");
+      document.getElementById("session-countdown").textContent = T.countdown.replace("%1$s", time);
+      document.getElementById("session-time").textContent = time;
+    }
+  }
   function renderCandidates(items) {
+    const signature = JSON.stringify(items);
+    if (signature === candidateSignature) return;
+    candidateSignature = signature;
     candidatesNode.replaceChildren();
     document.getElementById("candidates-section").classList.remove("hidden");
     if (!items.length) {
@@ -173,8 +280,6 @@
     for (const item of items) {
       const card = document.createElement("article");
       card.className = "candidate";
-      const head = document.createElement("div");
-      head.className = "candidate-head";
       const title = document.createElement("div");
       title.className = "candidate-title";
       title.textContent = T.versionLabel + ": " + (item.versionName || "—")
@@ -182,8 +287,7 @@
       const message = document.createElement("div");
       message.className = "candidate-message";
       message.textContent = item.message || textForStatus(item.status);
-      head.appendChild(title);
-      card.appendChild(head);
+      card.appendChild(title);
       card.appendChild(message);
       if (item.apkSha256) {
         const fingerprint = document.createElement("div");
@@ -197,19 +301,27 @@
         signer.textContent = T.signerLabel + ": " + item.signerSha256;
         card.appendChild(signer);
       }
-      if (item.status === "ready") {
+      if (item.status === "ready" && !installPending) {
         const install = document.createElement("button");
         install.type = "button";
         install.textContent = T.installButton;
         install.addEventListener("click", async () => {
           install.disabled = true;
+          installPending = true;
+          showStatus(T.installing, "warning");
           try {
             const result = await api("install", { candidateId: item.id });
             showStatus(result.message || T.installSent, "success");
-            polling = false;
+            startPolling();
           } catch (error) {
-            showStatus(error.message || T.error, "error");
-            install.disabled = false;
+            if (error.httpStatus) {
+              installPending = false;
+              showStatus(error.message || T.error, "error");
+              install.disabled = false;
+            } else {
+              showStatus(T.installUnknown, "warning");
+              polling = false;
+            }
           }
         });
         card.appendChild(install);
@@ -217,22 +329,56 @@
       candidatesNode.appendChild(card);
     }
   }
+  function applyInstallState(state) {
+    if (state.installState === "installed") {
+      installPending = false;
+      polling = false;
+      showStatus(T.installComplete, "success");
+      return true;
+    }
+    if (state.installState === "cancelled") {
+      installPending = false;
+      polling = false;
+      showStatus(T.installCancelled, "warning");
+      return true;
+    }
+    if (state.installState === "failed") {
+      installPending = false;
+      polling = false;
+      showStatus(T.installFailed, "error");
+      return true;
+    }
+    return false;
+  }
+  function startPolling() {
+    if (polling) return;
+    polling = true;
+    poll();
+  }
   async function poll() {
     while (polling) {
       try {
         const state = await api("status");
+        updateSession(state);
         if (state.expired) {
           polling = false;
           showStatus(T.expired, "error");
           return;
         }
-        renderCandidates(state.candidates || []);
-        if (!state.working) polling = false;
+        if (state.submitted) renderCandidates(state.candidates || []);
+        if (applyInstallState(state)) return;
+        if (installPending && state.installState === "pending") showStatus(T.installing, "warning");
+        await new Promise(resolve => setTimeout(resolve, state.working || installPending ? 1500 : 5000));
       } catch (error) {
         polling = false;
-        showStatus(error.message || T.error, "error");
+        if (installPending) {
+          showStatus(T.installUnknown, "warning");
+        } else if (error.message === T.expired) {
+          showStatus(T.expired, "error");
+        } else {
+          showStatus(error.message || T.error, "error");
+        }
       }
-      if (polling) await new Promise(resolve => setTimeout(resolve, 1800));
     }
   }
   document.getElementById("title").textContent = T.title;
@@ -243,7 +389,7 @@
   document.getElementById("verify").textContent = T.verifyButton;
   document.getElementById("check").textContent = T.submitButton;
   document.getElementById("candidates-title").textContent = T.candidatesTitle;
-  document.getElementById("footer").textContent = T.intro;
+  document.getElementById("footer").textContent = T.footer;
   document.getElementById("pairing-form").addEventListener("submit", async event => {
     event.preventDefault();
     if (!/^\d{6}$/.test(pin.value)) {
@@ -257,6 +403,7 @@
       document.getElementById("links-form").classList.remove("hidden");
       document.getElementById("pairing-form").classList.add("hidden");
       showStatus("");
+      startPolling();
     } catch (error) {
       showStatus(error.message || T.badPin, "error");
     }
@@ -275,9 +422,9 @@
     try {
       const state = await api("submit", { urls: urls });
       renderCandidates(state.candidates || []);
-      polling = !!state.working;
-      if (polling) poll();
-      else showStatus(T.noCandidates);
+      if (state.working) showStatus(T.downloading, "warning");
+      else if (!state.candidates || !state.candidates.length) showStatus(T.noCandidates, "error");
+      startPolling();
     } catch (error) {
       showStatus(error.message || T.error, "error");
       document.getElementById("check").disabled = false;

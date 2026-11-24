@@ -28,7 +28,9 @@ These unmodified screenshots were captured live from the launcher on a Fire TV S
 | Apple TV Switcher (Home Redirect) | `de.gabri.firetvhomehelper` | [AppleTVSwitcher.apk](https://github.com/ZyLuxx7/FireTvAppleLauncher/releases/latest/download/AppleTVSwitcher.apk) |
 | Apple TV Background Cleaner | `de.gabri.firetvcleaner` | [AppleTVBackgroundCleaner.apk](https://github.com/ZyLuxx7/FireTvAppleLauncher/releases/latest/download/AppleTVBackgroundCleaner.apk) |
 
-To update the launcher from the TV, open **Settings → Updates → Launcher Update** and scan the QR code. The phone page pre-fills the latest launcher APK link; tap **Check APK links**, select the verified launcher, and confirm installation on the TV. The built-in updater accepts only launcher APKs; install the Switcher and Background Cleaner as separate apps. These experimental APKs are signed with the same local debug key, so updates require a matching signing certificate. Android still asks for installation confirmation.
+To update the launcher from the TV, open **Settings → Updates → Launcher Update** and scan the QR code. The TV displays the phone connection and session countdown; the phone page pre-fills the latest launcher APK link. Tap **Check APK links**, select the verified launcher, and confirm installation on the TV. The launcher shows download and verification progress before handing off to Android. The built-in updater accepts only launcher APKs; install the Switcher and Background Cleaner as separate apps. These experimental APKs are signed with the same local debug key, so updates require a matching signing certificate. Android still asks for installation confirmation.
+
+The private signing key is not included in this repository. To build an in-place-compatible release locally, pass the matching key with `-PreleaseKeystore=<path>`; never commit or upload the keystore.
 
 ## Features
 
@@ -39,14 +41,14 @@ To update the launcher from the TV, open **Settings → Updates → Launcher Upd
 - **Lyrics:** optional lyric providers, including LRCLIB. A lyrics lookup can send the track title, artist, album, and duration to LRCLIB.
 - **Spotify and audio routing:** experimental Spotify Connect discovery and audio-output controls. Device discovery depends on the TV, Spotify, and local network.
 - **Quick controls:** launcher settings, network and audio controls, and TV power options where supported by the device.
-- **Launcher updates:** a TV-displayed QR code opens a same-Wi-Fi updater with a one-time token and PIN. It checks up to five direct links, including the [latest GitHub launcher APK](https://github.com/ZyLuxx7/FireTvAppleLauncher/releases/latest/download/AppleTVLauncher.apk), and offers only APKs matching the installed package, signing key, and version; Android still asks for installation confirmation on the TV.
+- **Launcher updates:** a TV-displayed QR code opens a same-Wi-Fi updater with a one-time token and PIN. It checks up to five direct links, including the [latest GitHub launcher APK](https://github.com/ZyLuxx7/FireTvAppleLauncher/releases/latest/download/AppleTVLauncher.apk), and offers only APKs matching the installed package, signing key, and version. The Home screen checks GitHub Releases for newer signed launcher APKs and shows a notice; release notes and required Terms of Use acceptance appear after an app version changes, and the terms remain available under **Settings → System → Update Terms of Use**.
 - **Appearance:** themes, wallpaper choices, focus-glass effects, and English, German, French, and Spanish UI strings.
 - **Permission status:** settings show the state of supported accessibility services and the equalizer's audio permission.
 
 ## Permissions and limitations
 
 - Android requires the user to enable accessibility services in system settings. The launcher can report their status and open those settings, but cannot enable them silently.
-- The QR updater may open Android's “Install unknown apps” setting, which the user must approve. Android's installation confirmation remains required; the updater cannot grant accessibility or other protected permissions.
+- The QR updater may open Android's “Install unknown apps” setting, which the user must approve. Android's installation confirmation remains required and its system installer cannot be restyled by the launcher; the launcher displays its own download and verification panel before handing off. The updater cannot grant accessibility or other protected permissions.
 - The equalizer needs Android's `RECORD_AUDIO` runtime permission. Tap its status row in launcher settings and approve Android's permission prompt to use audio capture.
 - Continue Watching items appear only when the focused app publishes supported Android TV Watch Next records.
 - Fire OS and Android TV behavior varies by manufacturer and version. Features that work on one TV may be unavailable or behave differently on another.
