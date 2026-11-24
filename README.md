@@ -12,11 +12,11 @@ This Fire TV build uses the package ID `com.appletv.launcher.firetv`, so it can 
 
 ## Screenshots
 
-These are captures from our Fire TV launcher build; the interface can vary by device and installed apps.
+These unmodified screenshots were captured live from the launcher on a Fire TV Stick (device identifier AFTSS) on 24 November 2026. The interface and app list can vary by device and installed apps.
 
-| Home screen | App management | Launcher settings |
+| Home screen | Apps library | Launcher settings |
 |---|---|---|
-| ![Our Fire TV launcher home screen](docs/Homescreen.png) | ![Our app management screen](docs/AppManagement.png) | ![Our launcher settings screen](docs/Settings.png) |
+| ![Live Fire TV launcher home screen captured on 24 November 2026](docs/Homescreen.png) | ![Apps library captured live on 24 November 2026](docs/AppManagement.png) | ![Launcher settings captured live on 24 November 2026](docs/Settings.png) |
 
 ## Downloads
 
