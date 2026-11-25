@@ -1,6 +1,7 @@
 package com.appletv.launcher;
 
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -41,6 +42,7 @@ public final class LauncherUpdateActivity extends LauncherActivity
     private static final int UNKNOWN_SOURCES_REQUEST = 701;
     private static final int INSTALL_REQUEST = 702;
     private static final int QR_SIZE = 520;
+    private static volatile LauncherUpdateActivity backgroundSession;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable sessionWatchdog = new Runnable() {
@@ -81,7 +83,41 @@ public final class LauncherUpdateActivity extends LauncherActivity
     private boolean waitingForUnknownSources;
     private boolean activityStarted;
     private boolean keepServerForPhoneResult;
+    private boolean keepServerInBackground;
+    private boolean installerLaunchStarted;
     private String currentSessionPin;
+
+    static Intent createIntent(Context context) {
+        return new Intent(context, LauncherUpdateActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    }
+
+    static boolean hasBackgroundSession() {
+        LauncherUpdateActivity current = backgroundSession;
+        return current != null && current.server != null && !current.server.isExpired();
+    }
+
+    static boolean isBackgroundSessionConnected() {
+        LauncherUpdateActivity current = backgroundSession;
+        return current != null && current.server != null && current.server.isClientConnected();
+    }
+
+    static boolean isBackgroundInstallPending() {
+        LauncherUpdateActivity current = backgroundSession;
+        return current != null && current.pendingInstall != null;
+    }
+
+    static long backgroundSessionRemainingMillis() {
+        LauncherUpdateActivity current = backgroundSession;
+        return current == null || current.server == null
+                ? 0L : current.server.getRemainingSessionMillis();
+    }
+
+    static void openBackgroundSession(Context context) {
+        if (hasBackgroundSession()) context.startActivity(createIntent(context));
+    }
 
     @Override
     protected void onCreate(Bundle state) {
@@ -105,12 +141,13 @@ public final class LauncherUpdateActivity extends LauncherActivity
         transferProgress = findViewById(R.id.launcherUpdateTransferProgress);
         qr = findViewById(R.id.launcherUpdateQr);
 
-        findViewById(R.id.launcherUpdateBack).setOnClickListener(view -> finish());
+        findViewById(R.id.launcherUpdateBack).setOnClickListener(view -> showExitPrompt());
         allowSources.setOnClickListener(view -> openUnknownSourcesSettings());
         newSession.setOnClickListener(view -> {
             deletePendingFile();
             pendingInstall = null;
             expectedVersionCode = 0;
+            installerLaunchStarted = false;
             startUpdateSession();
         });
 
@@ -121,10 +158,30 @@ public final class LauncherUpdateActivity extends LauncherActivity
     protected void onStart() {
         super.onStart();
         activityStarted = true;
+        keepServerInBackground = false;
+        if (backgroundSession == this) {
+            backgroundSession = null;
+            MainActivity.notifyBackgroundUpdateChanged();
+        }
         if (server != null) {
             handler.removeCallbacks(sessionWatchdog);
             updateSessionDisplay();
             handler.postDelayed(sessionWatchdog, 1000);
+            if (pendingInstall != null) {
+                LauncherUpdateServer.InstallCandidate candidate = pendingInstall;
+                handler.postDelayed(() -> beginInstall(candidate), 400);
+            }
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        keepServerInBackground = false;
+        if (backgroundSession == this) {
+            backgroundSession = null;
+            MainActivity.notifyBackgroundUpdateChanged();
         }
     }
 
@@ -137,7 +194,7 @@ public final class LauncherUpdateActivity extends LauncherActivity
     @Override
     protected void onStop() {
         activityStarted = false;
-        if (pendingInstall == null && !keepServerForPhoneResult) {
+        if (pendingInstall == null && !keepServerForPhoneResult && !keepServerInBackground) {
             handler.removeCallbacks(sessionWatchdog);
             stopServer();
         } else if (server != null) {
@@ -164,7 +221,21 @@ public final class LauncherUpdateActivity extends LauncherActivity
 
     @Override
     public void onInstallRequested(LauncherUpdateServer.InstallCandidate candidate) {
-        handler.postDelayed(() -> beginInstall(candidate), 450);
+        handler.post(() -> {
+            pendingInstall = candidate;
+            handler.postDelayed(() -> {
+                if (!activityStarted) {
+                    MainActivity.notifyBackgroundUpdateChanged();
+                    try {
+                        startActivity(createIntent(this));
+                    } catch (SecurityException exception) {
+                        Log.e(TAG, "Could not bring the background update session to the TV", exception);
+                    }
+                    return;
+                }
+                beginInstall(candidate);
+            }, 450);
+        });
     }
 
     @Override
@@ -284,7 +355,8 @@ public final class LauncherUpdateActivity extends LauncherActivity
     }
 
     private void beginInstall(LauncherUpdateServer.InstallCandidate candidate) {
-        if (!activityStarted || isFinishing() || isDestroyed()) return;
+        if (!activityStarted || isFinishing() || isDestroyed() || installerLaunchStarted) return;
+        installerLaunchStarted = true;
         pendingInstall = candidate;
         expectedVersionCode = candidate.verifiedApk.versionCode;
         installedVersionBefore = installedVersionCode();
@@ -326,6 +398,7 @@ public final class LauncherUpdateActivity extends LauncherActivity
             finishInstallHandoff();
             deletePendingFile();
             pendingInstall = null;
+            installerLaunchStarted = false;
             newSession.setVisibility(View.VISIBLE);
             newSession.requestFocus();
         }
@@ -340,6 +413,7 @@ public final class LauncherUpdateActivity extends LauncherActivity
         finishInstallHandoff();
         deletePendingFile();
         pendingInstall = null;
+        installerLaunchStarted = false;
         expectedVersionCode = 0;
         if (installed) {
             status.setText(R.string.launcher_update_install_success);
@@ -367,10 +441,54 @@ public final class LauncherUpdateActivity extends LauncherActivity
 
     private void reopenLauncher() {
         if (isFinishing() || isDestroyed()) return;
-        Intent launch = new Intent(this, MainActivity.class);
+        Intent launch = new Intent(this, MainActivity.class)
+                .setAction(MainActivity.ACTION_POST_UPDATE);
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(launch);
         finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        showExitPrompt();
+    }
+
+    private void showExitPrompt() {
+        if (isFinishing() || isDestroyed()) return;
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(R.string.launcher_update_exit_title)
+                .setMessage(R.string.launcher_update_exit_message)
+                .setPositiveButton(R.string.launcher_update_exit_end,
+                        (dialog, which) -> endUpdateSession())
+                .setNegativeButton(R.string.launcher_update_exit_background,
+                        (dialog, which) -> moveUpdateToBackground())
+                .setNeutralButton(R.string.launcher_update_exit_continue, null)
+                .show();
+    }
+
+    private void endUpdateSession() {
+        if (server != null) server.setInstallResult("cancelled");
+        deletePendingFile();
+        pendingInstall = null;
+        installerLaunchStarted = false;
+        stopServer();
+        finish();
+    }
+
+    private void moveUpdateToBackground() {
+        if (server == null || server.isExpired()) {
+            finish();
+            return;
+        }
+        keepServerInBackground = true;
+        backgroundSession = this;
+        MainActivity.notifyBackgroundUpdateChanged();
+        Intent home = new Intent(this, MainActivity.class)
+                .setAction(Intent.ACTION_MAIN)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(home);
     }
 
     private void showUnknownSourcesRequired() {
@@ -479,9 +597,13 @@ public final class LauncherUpdateActivity extends LauncherActivity
 
     private void stopServer() {
         handler.removeCallbacks(sessionWatchdog);
-        if (server == null) return;
-        server.stop();
-        server = null;
+        if (backgroundSession == this) backgroundSession = null;
+        keepServerInBackground = false;
+        if (server != null) {
+            server.stop();
+            server = null;
+        }
+        MainActivity.notifyBackgroundUpdateChanged();
     }
 
     private void deletePendingFile() {

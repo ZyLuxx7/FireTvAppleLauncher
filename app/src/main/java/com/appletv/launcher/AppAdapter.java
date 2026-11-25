@@ -560,7 +560,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         boolean focused = h.card.isFocused();   // a rebind after reload() can hit the focused tile
         h.dockSize = dockSize;
         float baseScale = position < dockSize ? dockScale : 1f;
-        h.name.setVisibility(position < dockSize && !focused ? View.INVISIBLE : View.VISIBLE);
+        h.name.setVisibility(View.VISIBLE);
         h.name.setAlpha(focused ? 1f : 0f);
         if (e.kind == Entry.NOW_PLAYING) h.card.setContentDescription(e.name);
         float cardScale = baseScale * (focused && animations ? focusScale() : 1f);

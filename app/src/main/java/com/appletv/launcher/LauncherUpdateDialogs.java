@@ -42,7 +42,11 @@ final class LauncherUpdateDialogs {
 
         version.setText(activity.getString(R.string.update_notice_version_format,
                 LauncherAppVersion.name(activity)));
-        notes.setText(R.string.update_release_notes_v1_0_1);
+        long versionCode = LauncherAppVersion.code(activity);
+        int releaseNotes = versionCode >= 9 ? R.string.update_release_notes_v1_0_3
+                : versionCode >= 8 ? R.string.update_release_notes_v1_0_2
+                : R.string.update_release_notes_v1_0_1;
+        notes.setText(releaseNotes);
         continueButton.setEnabled(false);
 
         Dialog dialog = showGlassDialog(activity, content, 700, false);

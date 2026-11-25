@@ -1,6 +1,8 @@
 package com.appletv.launcher;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -31,6 +33,34 @@ public final class NowPlayingListenerTest {
         assertTrue(NowPlayingListener.sameVisibleContent(first, positionUpdate));
         assertFalse(NowPlayingListener.sameVisibleContent(first,
                 snapshot("spotify-connect", false, true, true, 20_000L)));
+    }
+
+    @Test
+    public void localSpotifyPlaybackUsesMatchingConnectTrackUri() {
+        NowPlayingListener.Snapshot local = snapshot(
+                "com.spotify.tv.android", true, true, false);
+        NowPlayingListener.Snapshot remote = new NowPlayingListener.Snapshot(
+                "Track", "Artist", "Album", null, "spotify-connect", null,
+                true, true, 180_000L, 10_000L, 0L, 1f, null,
+                true, "device", null, "spotify:track:track123");
+
+        NowPlayingListener.Snapshot merged =
+                NowPlayingListener.mergeSpotifyTrackUri(local, remote);
+
+        assertEquals("spotify:track:track123", merged.spotifyTrackUri);
+        assertEquals(local.controller, merged.controller);
+    }
+
+    @Test
+    public void doesNotUseConnectUriWhenTheCurrentTrackDoesNotMatch() {
+        NowPlayingListener.Snapshot local = snapshot(
+                "com.spotify.tv.android", true, true, false);
+        NowPlayingListener.Snapshot remote = new NowPlayingListener.Snapshot(
+                "Different track", "Artist", "Album", null, "spotify-connect", null,
+                true, true, 180_000L, 10_000L, 0L, 1f, null,
+                true, "device", null, "spotify:track:track123");
+
+        assertNull(NowPlayingListener.mergeSpotifyTrackUri(local, remote).spotifyTrackUri);
     }
 
     private static NowPlayingListener.Snapshot snapshot(

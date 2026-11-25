@@ -36,11 +36,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Android TV "Recents" screen — matches the red Apple-TV-style Home design.
@@ -61,10 +64,13 @@ public class RecentAppsActivity extends LauncherActivity {
 
     // card sizes in dp (design px / 2)
     private static final int CARD_W = 240, CARD_H = 135, FOCUS_W = 320, FOCUS_H = 180;
+    private static volatile List<RecentApp> cachedApps = Collections.emptyList();
 
     private final List<RecentApp> apps = new ArrayList<>();
     private final List<View> cardViews = new ArrayList<>();
+    private final ExecutorService appLoadingExecutor = Executors.newSingleThreadExecutor();
     private int selected = 0;
+    private long appLoadGeneration;
     private int glowColor = GLOW_DEFAULT;
 
     private View glowBg;
@@ -110,8 +116,35 @@ public class RecentAppsActivity extends LauncherActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        loadApps();
-        buildCards();
+        List<RecentApp> cached = cachedApps;
+        if (!cached.isEmpty()) {
+            apps.clear();
+            apps.addAll(cached);
+            updateSubtitle();
+            buildCards();
+        } else {
+            txtSubtitle.setText(R.string.recent_apps_loading);
+            btnClearAll.requestFocus();
+        }
+        long request = ++appLoadGeneration;
+        appLoadingExecutor.execute(() -> {
+            List<RecentApp> loaded = loadAppsSnapshot();
+            runOnUiThread(() -> {
+                if (request != appLoadGeneration || isFinishing() || isDestroyed()) return;
+                apps.clear();
+                apps.addAll(loaded);
+                cachedApps = new ArrayList<>(loaded);
+                updateSubtitle();
+                buildCards();
+            });
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        appLoadGeneration++;
+        appLoadingExecutor.shutdownNow();
+        super.onDestroy();
     }
 
     // ------------------------------------------------------------------ styling
@@ -226,8 +259,8 @@ public class RecentAppsActivity extends LauncherActivity {
         return out;
     }
 
-    private void loadApps() {
-        apps.clear();
+    private List<RecentApp> loadAppsSnapshot() {
+        List<RecentApp> loadedApps = new ArrayList<>();
         Set<String> skip = homePackages();
         skip.add(getPackageName());
         if (hasUsageAccess()) {
@@ -250,12 +283,12 @@ public class RecentAppsActivity extends LauncherActivity {
                     a.lastUsed = s.getLastTimeUsed();
                     a.fgTime = s.getTotalTimeInForeground();
                     a.color = dominantColor(pm.getApplicationIcon(ai));
-                    apps.add(a);
+                    loadedApps.add(a);
                 } catch (PackageManager.NameNotFoundException ignored) { }
             }
-            apps.sort((x, y) -> Long.compare(y.lastUsed, x.lastUsed));
+            loadedApps.sort((x, y) -> Long.compare(y.lastUsed, x.lastUsed));
         }
-        if (apps.isEmpty()) {
+        if (loadedApps.isEmpty()) {
             Intent main = new Intent(Intent.ACTION_MAIN, null);
             main.addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
             List<ResolveInfo> list = pm.queryIntentActivities(main, 0);
@@ -276,13 +309,13 @@ public class RecentAppsActivity extends LauncherActivity {
                     a.isBanner = banner != null;
                     a.image = banner != null ? banner : ri.loadIcon(pm);
                     a.color = dominantColor(ri.loadIcon(pm));
-                    apps.add(a);
-                    if (apps.size() >= MAX_APPS) break;
+                    loadedApps.add(a);
+                    if (loadedApps.size() >= MAX_APPS) break;
                 }
             }
         }
-        while (apps.size() > MAX_APPS) apps.remove(apps.size() - 1);
-        updateSubtitle();
+        while (loadedApps.size() > MAX_APPS) loadedApps.remove(loadedApps.size() - 1);
+        return loadedApps;
     }
 
     private void updateSubtitle() {
@@ -524,6 +557,7 @@ public class RecentAppsActivity extends LauncherActivity {
             cardRow.removeView(item);
             cardViews.remove(idx);
             apps.remove(idx);
+            cachedApps = new ArrayList<>(apps);
             updateSubtitle();
             if (cardViews.isEmpty()) { animateGlowTo(GLOW_DEFAULT); btnClearAll.requestFocus(); return; }
             selected = Math.min(idx, cardViews.size() - 1);
@@ -541,6 +575,7 @@ public class RecentAppsActivity extends LauncherActivity {
         }
         ed.apply();
         apps.clear();
+        cachedApps = Collections.emptyList();
         cardViews.clear();
         cardRow.removeAllViews();
         updateSubtitle();

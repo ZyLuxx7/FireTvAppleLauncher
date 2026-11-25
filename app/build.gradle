@@ -2,6 +2,20 @@ plugins {
     id 'com.android.application'
 }
 
+def releaseSigningValues = [
+        keystore     : providers.gradleProperty('releaseKeystore').orNull
+                ?: System.getenv('APPLE_LAUNCHER_RELEASE_KEYSTORE'),
+        storePassword: providers.gradleProperty('releaseStorePassword').orNull
+                ?: System.getenv('APPLE_LAUNCHER_RELEASE_STORE_PASSWORD'),
+        keyAlias     : providers.gradleProperty('releaseKeyAlias').orNull
+                ?: System.getenv('APPLE_LAUNCHER_RELEASE_KEY_ALIAS'),
+        keyPassword  : providers.gradleProperty('releaseKeyPassword').orNull
+                ?: System.getenv('APPLE_LAUNCHER_RELEASE_KEY_PASSWORD')
+]
+def releaseSigningConfigured = releaseSigningValues.values().every {
+    it != null && !it.trim().isEmpty()
+}
+
 android {
     namespace 'com.appletv.launcher'
     compileSdk 36
@@ -10,17 +24,19 @@ android {
         applicationId "com.appletv.launcher.firetv"
         minSdk 28
         targetSdk 34
-        versionCode 7
-        versionName "1.0.1-firetv"
+        versionCode 9
+        versionName "1.0.3-firetv"
         resConfigs "en", "de", "fr", "es"
     }
 
     signingConfigs {
         release {
-            storeFile project.file(project.findProperty('releaseKeystore') ?: 'debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
+            if (releaseSigningConfigured) {
+                storeFile project.file(releaseSigningValues.keystore)
+                storePassword releaseSigningValues.storePassword
+                keyAlias releaseSigningValues.keyAlias
+                keyPassword releaseSigningValues.keyPassword
+            }
         }
     }
 
@@ -32,6 +48,17 @@ android {
             signingConfig signingConfigs.release
         }
         debug {
+        }
+    }
+
+    tasks.configureEach { task ->
+        if (task.name == 'preReleaseBuild') {
+            task.doFirst {
+                if (!releaseSigningConfigured) {
+                    throw new GradleException('Release signing is not configured. Set releaseKeystore, '
+                            + 'releaseStorePassword, releaseKeyAlias, and releaseKeyPassword locally.')
+                }
+            }
         }
     }
 

@@ -10,9 +10,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -24,11 +27,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 final class LauncherUpdateServer extends NanoHTTPD {
     static final int MAX_CANDIDATES = 5;
     static final long SESSION_IDLE_TIMEOUT_MS = 10 * 60 * 1000L;
     private static final String TAG = "LauncherUpdateServer";
+    private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
+    private static final String UPLOAD_PIN_HEADER = "x-launcher-update-pin";
     private static final int MAX_REQUEST_BYTES = 16 * 1024;
     private static final long MAX_BATCH_BYTES = 250L * 1024L * 1024L;
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -143,12 +149,15 @@ final class LauncherUpdateServer extends NanoHTTPD {
 
             String basePath = "/u/" + token;
             String path = session.getUri();
+            String apiPath = basePath + "/api";
+            String uploadPath = basePath + "/upload";
             if (session.getMethod() == Method.GET && basePath.equals(path)) {
                 if (isExpired()) return jsonResponse(Response.Status.BAD_REQUEST,
                         error(context.getString(R.string.launcher_update_web_expired)));
                 return htmlResponse(html);
             }
-            if (session.getMethod() != Method.POST || !(basePath + "/api").equals(path)) {
+            if (session.getMethod() != Method.POST
+                    || (!apiPath.equals(path) && !uploadPath.equals(path))) {
                 return textResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Not found");
             }
             if (isExpired()) {
@@ -157,6 +166,14 @@ final class LauncherUpdateServer extends NanoHTTPD {
             }
             if (!hasExpectedOrigin(session)) {
                 return textResponse(Response.Status.FORBIDDEN, MIME_PLAINTEXT, "Invalid origin");
+            }
+            if (uploadPath.equals(path)) {
+                String suppliedPin = session.getHeaders().get(UPLOAD_PIN_HEADER);
+                if (!authenticate(suppliedPin == null ? "" : suppliedPin, true)) {
+                    return jsonResponse(Response.Status.FORBIDDEN,
+                            error(context.getString(R.string.launcher_update_web_bad_pin)));
+                }
+                return uploadCandidate(session);
             }
             JSONObject request = readJsonRequest(session);
             String suppliedPin = request.optString("pin", "");
@@ -303,6 +320,182 @@ final class LauncherUpdateServer extends NanoHTTPD {
             }
         }
         return jsonResponse(Response.Status.OK, getStatus());
+    }
+
+    private Response uploadCandidate(IHTTPSession session) throws JSONException {
+        long contentLength;
+        try {
+            contentLength = validateUploadRequest(session);
+        } catch (IOException exception) {
+            return jsonResponse(Response.Status.BAD_REQUEST,
+                    error(context.getString(R.string.launcher_update_web_upload_invalid)));
+        }
+
+        CandidateState candidate = new CandidateState("1", "");
+        candidate.status = CandidateStatus.DOWNLOADING;
+        candidate.message = context.getString(R.string.launcher_update_web_downloading);
+        synchronized (lock) {
+            if (batchSubmitted) {
+                return jsonResponse(Response.Status.BAD_REQUEST,
+                        error(context.getString(R.string.launcher_update_web_already_submitted)));
+            }
+            batchSubmitted = true;
+            batchRunning = true;
+            lastActivityAt = SystemClock.elapsedRealtime();
+            candidates.add(candidate);
+        }
+        notifyCandidatesChanged();
+
+        final File apk;
+        try {
+            apk = receiveUploadedApk(session, contentLength);
+        } catch (IOException exception) {
+            Log.w(TAG, "Could not receive a launcher APK from the phone", exception);
+            finishUploadedCandidate(candidate, null);
+            return jsonResponse(Response.Status.OK, getStatus());
+        }
+
+        boolean unavailable;
+        synchronized (lock) {
+            unavailable = stopped || expired;
+            if (unavailable) {
+                files.remove(apk);
+                candidate.status = CandidateStatus.ERROR;
+                candidate.message = context.getString(R.string.launcher_update_web_expired);
+                batchRunning = false;
+                lastActivityAt = SystemClock.elapsedRealtime();
+            } else {
+                downloadedBytes += apk.length();
+            }
+        }
+        if (unavailable) {
+            if (apk.exists() && !apk.delete()) {
+                Log.w(TAG, "Could not remove an APK uploaded after its update session ended.");
+            }
+            notifyCandidatesChanged();
+            return jsonResponse(Response.Status.BAD_REQUEST,
+                    error(context.getString(R.string.launcher_update_web_expired)));
+        }
+
+        try {
+            downloadExecutor.execute(() -> verifyUploadedCandidate(candidate, apk));
+        } catch (RejectedExecutionException exception) {
+            Log.w(TAG, "Could not queue the uploaded launcher APK for verification", exception);
+            finishUploadedCandidate(candidate, apk);
+        }
+        return jsonResponse(Response.Status.OK, getStatus());
+    }
+
+    private long validateUploadRequest(IHTTPSession session) throws IOException {
+        Map<String, String> headers = session.getHeaders();
+        String contentType = headers.get("content-type");
+        if (contentType == null || !APK_CONTENT_TYPE.equalsIgnoreCase(contentType.trim())) {
+            throw new IOException("The upload must contain an Android APK.");
+        }
+        if (headers.containsKey("transfer-encoding")) {
+            throw new IOException("Chunked APK uploads are not supported.");
+        }
+        String lengthValue = headers.get("content-length");
+        if (lengthValue == null) throw new IOException("The APK upload has no content length.");
+
+        long length;
+        try {
+            length = Long.parseLong(lengthValue);
+        } catch (NumberFormatException exception) {
+            throw new IOException("The APK upload has an invalid content length.", exception);
+        }
+        long remaining;
+        synchronized (lock) {
+            remaining = MAX_BATCH_BYTES - downloadedBytes;
+        }
+        long maximum = Math.min(LauncherUpdateDownloader.MAX_APK_BYTES, remaining);
+        if (length < 1 || length > maximum) {
+            throw new IOException("The APK upload is empty or exceeds the size limit.");
+        }
+        return length;
+    }
+
+    private File receiveUploadedApk(IHTTPSession session, long contentLength) throws IOException {
+        File apk = File.createTempFile("candidate-", ".apk", cacheDirectory);
+        synchronized (lock) {
+            files.add(apk);
+        }
+        try {
+            try (OutputStream output = new BufferedOutputStream(new FileOutputStream(apk))) {
+                InputStream input = session.getInputStream();
+                byte[] buffer = new byte[32 * 1024];
+                long remaining = contentLength;
+                while (remaining > 0) {
+                    int count = input.read(buffer, 0,
+                            (int) Math.min((long) buffer.length, remaining));
+                    if (count < 0) {
+                        throw new IOException("The APK upload ended before its declared length.");
+                    }
+                    if (count == 0) continue;
+                    output.write(buffer, 0, count);
+                    remaining -= count;
+                }
+            }
+            return apk;
+        } catch (IOException exception) {
+            synchronized (lock) {
+                files.remove(apk);
+            }
+            if (apk.exists() && !apk.delete()) {
+                Log.w(TAG, "Could not remove a partial launcher APK upload.");
+            }
+            throw exception;
+        }
+    }
+
+    private void verifyUploadedCandidate(CandidateState candidate, File apk) {
+        try {
+            LauncherUpdateApkVerifier.VerifiedApk verified =
+                    LauncherUpdateApkVerifier.verify(context, apk);
+            boolean discard;
+            synchronized (lock) {
+                discard = stopped || expired;
+                if (discard) {
+                    files.remove(apk);
+                    candidate.status = CandidateStatus.ERROR;
+                    candidate.message = context.getString(R.string.launcher_update_web_expired);
+                } else {
+                    candidate.file = apk;
+                    candidate.verifiedApk = verified;
+                    candidate.status = CandidateStatus.READY;
+                    candidate.message = context.getString(R.string.launcher_update_web_ready,
+                            verified.versionName, verified.versionCode);
+                }
+                batchRunning = false;
+                lastActivityAt = SystemClock.elapsedRealtime();
+            }
+            if (discard && apk.exists() && !apk.delete()) {
+                Log.w(TAG, "Could not remove an APK after its update session ended.");
+            }
+        } catch (IOException | SecurityException exception) {
+            Log.w(TAG, "The uploaded launcher APK could not be verified", exception);
+            finishUploadedCandidate(candidate, apk);
+            return;
+        }
+        notifyCandidatesChanged();
+    }
+
+    private void finishUploadedCandidate(CandidateState candidate, File apk) {
+        if (apk != null) {
+            synchronized (lock) {
+                files.remove(apk);
+            }
+            if (apk.exists() && !apk.delete()) {
+                Log.w(TAG, "Could not remove a rejected launcher APK upload.");
+            }
+        }
+        synchronized (lock) {
+            candidate.status = CandidateStatus.ERROR;
+            candidate.message = context.getString(R.string.launcher_update_web_upload_failed);
+            batchRunning = false;
+            lastActivityAt = SystemClock.elapsedRealtime();
+        }
+        notifyCandidatesChanged();
     }
 
     private void downloadCandidates(List<CandidateState> accepted) {
@@ -512,6 +705,13 @@ final class LauncherUpdateServer extends NanoHTTPD {
         page = replace(page, "PIN_LABEL", R.string.launcher_update_web_pin);
         page = replace(page, "LINKS_LABEL", R.string.launcher_update_web_links);
         page = replace(page, "LINKS_HINT", R.string.launcher_update_web_links_hint);
+        page = replace(page, "UPLOAD_OR", R.string.launcher_update_web_upload_or);
+        page = replace(page, "UPLOAD_LABEL", R.string.launcher_update_web_upload_label);
+        page = replace(page, "UPLOAD_HINT", R.string.launcher_update_web_upload_hint);
+        page = replace(page, "UPLOAD_BUTTON", R.string.launcher_update_web_upload_button);
+        page = replace(page, "UPLOAD_PROGRESS", R.string.launcher_update_web_upload_progress);
+        page = replace(page, "UPLOAD_INVALID", R.string.launcher_update_web_upload_invalid);
+        page = replace(page, "UPLOAD_FAILED", R.string.launcher_update_web_upload_failed);
         page = replace(page, "VERIFY_BUTTON", R.string.launcher_update_web_verify);
         page = replace(page, "SUBMIT_BUTTON", R.string.launcher_update_web_check);
         page = replace(page, "CANDIDATES_TITLE", R.string.launcher_update_web_candidates);
@@ -526,6 +726,7 @@ final class LauncherUpdateServer extends NanoHTTPD {
         page = replace(page, "HASH_LABEL", R.string.launcher_update_web_hash);
         page = replace(page, "SIGNER_LABEL", R.string.launcher_update_web_signer);
         page = replace(page, "ERROR", R.string.launcher_update_web_error);
+        page = replace(page, "CONNECTION_LOST", R.string.launcher_update_web_connection_lost);
         page = replace(page, "READY", R.string.launcher_update_web_ready_generic);
         page = replace(page, "QUEUED", R.string.launcher_update_web_queued);
         page = replace(page, "DOWNLOADING", R.string.launcher_update_web_downloading);
@@ -539,6 +740,8 @@ final class LauncherUpdateServer extends NanoHTTPD {
         page = replace(page, "INSTALL_CANCELLED", R.string.launcher_update_web_install_cancelled);
         page = replace(page, "INSTALL_FAILED", R.string.launcher_update_web_install_failed);
         page = replace(page, "FOOTER", R.string.launcher_update_web_footer);
+        page = page.replace("{{MAX_APK_BYTES}}",
+                Long.toString(LauncherUpdateDownloader.MAX_APK_BYTES));
         return page;
     }
 

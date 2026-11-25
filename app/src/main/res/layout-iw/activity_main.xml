@@ -112,24 +112,13 @@
                         android:id="@+id/clock"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:format12Hour="h:mm"
+                        android:format12Hour="HH:mm"
                         android:format24Hour="HH:mm"
                         android:textColor="#BFFFFFFF"
                         android:textSize="@dimen/tvos_text_caption1"
                         android:fontFamily="sans-serif-medium"
                         android:includeFontPadding="false" />
 
-                    <TextClock
-                        android:id="@+id/ampm"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="3dp"
-                        android:format12Hour="a"
-                        android:format24Hour=""
-                        android:textColor="#BFFFFFFF"
-                        android:textSize="@dimen/tvos_text_caption1"
-                        android:fontFamily="sans-serif-medium"
-                        android:includeFontPadding="false" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -155,7 +144,7 @@
                         android:layout_height="wrap_content"
                         android:singleLine="true"
                         android:ellipsize="end"
-                        android:textColor="#E6FFFFFF"
+                        android:textColor="#BFFFFFFF"
                         android:textSize="@dimen/tvos_text_caption1"
                         android:fontFamily="sans-serif-medium"
                         android:includeFontPadding="false"
@@ -170,7 +159,7 @@
                         android:ellipsize="end"
                         android:format12Hour="@string/date_format"
                         android:format24Hour="@string/date_format"
-                        android:textColor="#B3FFFFFF"
+                        android:textColor="#BFFFFFFF"
                         android:textSize="@dimen/tvos_text_caption1"
                         android:fontFamily="sans-serif-medium"
                         android:shadowColor="#73000000"
@@ -193,7 +182,7 @@
                     android:layout_height="wrap_content"
                     android:singleLine="true"
                     android:ellipsize="end"
-                    android:textColor="#B3FFFFFF"
+                    android:textColor="#BFFFFFFF"
                     android:textSize="@dimen/tvos_text_caption1"
                     android:fontFamily="sans-serif-medium"
                     android:shadowColor="#73000000"

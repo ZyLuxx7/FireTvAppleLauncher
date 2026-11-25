@@ -110,7 +110,8 @@ public final class LauncherSettingsActivity extends LauncherActivity {
         Config config = Config.load(this);
         dockAppCount = config.dockAppCount;
         animations = config.animations;
-        advancedEffects = config.animations && config.advancedEffects;
+        advancedEffects = config.animations && config.advancedEffects
+                && !choices.getBoolean("launcher_performance_limited", false);
 
         int[] ids = {R.id.dockApps3, R.id.dockApps4, R.id.dockApps5, R.id.dockApps6, R.id.dockApps7};
         for (int i = 0; i < ids.length; i++) {
@@ -180,7 +181,8 @@ public final class LauncherSettingsActivity extends LauncherActivity {
             Config current = Config.load(this);
             dockAppCount = current.dockAppCount;
             animations = current.animations;
-            advancedEffects = current.animations && current.advancedEffects;
+            advancedEffects = current.animations && current.advancedEffects
+                    && !choices.getBoolean("launcher_performance_limited", false);
             liquidGlassEnabled = false;
             setResult(RESULT_OK);
             refresh();
@@ -297,7 +299,7 @@ public final class LauncherSettingsActivity extends LauncherActivity {
         findViewById(R.id.settingsSoftwareUpdatesChoice).setOnClickListener(v ->
                 open(new Intent(Settings.ACTION_DEVICE_INFO_SETTINGS)));
         findViewById(R.id.settingsLauncherUpdateChoice).setOnClickListener(v ->
-                startActivity(new Intent(this, LauncherUpdateActivity.class)));
+                startActivity(LauncherUpdateActivity.createIntent(this)));
         findViewById(R.id.settingsUpdateTermsChoice).setOnClickListener(v ->
                 LauncherUpdateDialogs.showTermsDialog(this));
         findViewById(R.id.airPlayTvSettingsChoice).setOnClickListener(v -> openTvSettings());
@@ -723,7 +725,10 @@ public final class LauncherSettingsActivity extends LauncherActivity {
 
     private void setAdvanced(boolean enabled) {
         advancedEffects = enabled;
-        choices.edit().putBoolean("advanced_effects", enabled).apply();
+        choices.edit()
+                .putBoolean("advanced_effects", enabled)
+                .putBoolean("launcher_performance_limited", false)
+                .apply();
         setResult(RESULT_OK);
         refresh();
     }

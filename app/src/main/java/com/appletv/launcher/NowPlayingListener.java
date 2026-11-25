@@ -112,9 +112,41 @@ public final class NowPlayingListener extends NotificationListenerService {
     static Snapshot snapshot() {
         Snapshot local = latestLocal;
         Snapshot remote = latestSpotifyRemote;
-        if (local != null && local.active && local.playing) return local;
+        if (local != null && local.active && local.playing) {
+            return mergeSpotifyTrackUri(local, remote);
+        }
         if (remote != null && remote.active) return remote;
         return local;
+    }
+
+    static boolean hasActiveSpotifyRemoteSnapshot() {
+        Snapshot remote = latestSpotifyRemote;
+        return remote != null && remote.active;
+    }
+
+    static Snapshot mergeSpotifyTrackUri(Snapshot local, Snapshot remote) {
+        if (local == null || local.spotifyTrackUri != null || !isSpotifyPlayback(local)
+                || remote == null || !remote.active || !remote.playing
+                || remote.spotifyTrackUri == null || !isSameSpotifyTrack(local, remote)) {
+            return local;
+        }
+        return new Snapshot(local.title, local.artist, local.album, local.lyrics,
+                local.packageName, local.artwork, local.playing, local.active,
+                local.durationMs, local.positionMs, local.positionUpdatedAtMs,
+                local.playbackSpeed, local.controller, true,
+                remote.spotifyDeviceId == null ? local.spotifyDeviceId : remote.spotifyDeviceId,
+                remote.spotifyArtworkUrl == null
+                        ? local.spotifyArtworkUrl : remote.spotifyArtworkUrl,
+                remote.spotifyTrackUri);
+    }
+
+    static boolean isSameSpotifyTrack(Snapshot first, Snapshot second) {
+        if (!hasText(first.title) || !hasText(second.title)
+                || !first.title.trim().equalsIgnoreCase(second.title.trim())) {
+            return false;
+        }
+        return !hasText(first.artist) || !hasText(second.artist)
+                || first.artist.trim().equalsIgnoreCase(second.artist.trim());
     }
 
     static boolean isSpotifyPlayback(Snapshot snapshot) {

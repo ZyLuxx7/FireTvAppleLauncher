@@ -90,6 +90,8 @@
         <activity
             android:name=".LauncherUpdateActivity"
             android:exported="false"
+            android:taskAffinity="com.appletv.launcher.update"
+            android:launchMode="singleTop"
             android:excludeFromRecents="true"
             android:screenOrientation="sensorLandscape" />
         <activity

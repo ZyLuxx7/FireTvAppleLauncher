@@ -45,6 +45,10 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.transition.ChangeBounds;
+import android.transition.Fade;
+import android.transition.TransitionManager;
+import android.transition.TransitionSet;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -138,6 +142,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
             this.popup = popup;
             this.addedByLauncher = addedByLauncher;
         }
+
     }
 
     private static final int LAUNCHER_SETTINGS_REQUEST = 42;
@@ -147,11 +152,18 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     private static final long SPOTIFY_DEVICE_ROUTE_CACHE_MS = 60_000L;
     private static final long HOME_PLAYER_SEEK_STEP_MS = 15_000L;
     private static final long HOME_PLAYER_SEEK_DEBOUNCE_MS = 180L;
+    private static final long HOME_PLAYER_UP_DOUBLE_PRESS_MS = 400L;
     private static final long HOME_PLAYER_SESSION_LOSS_GRACE_MS = 3_000L;
     private static final long DEFAULT_SCREENSAVER_TIMEOUT_MS = 300_000L;
     private static final long SCREENSAVER_MOVE_MS = 60_000L;
     private static final int[] SCREENSAVER_GLOW_COLORS = {
             0xFF2B5CFF, 0xFF00A39A, 0xFF8A3FFC, 0xFFE0661B, 0xFFD6336C
+    };
+    private final Runnable backgroundUpdateCardTick = new Runnable() {
+        @Override
+        public void run() {
+            refreshBackgroundUpdateCard();
+        }
     };
     private static final String[] SCREENSAVER_LANDSCAPES = {
             HomeWallpaperCatalog.SCENIC, HomeWallpaperCatalog.SCENIC,
@@ -163,6 +175,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     /** Sent by QuickSettingsActivity: open Launcher settings from here so Home rebuilds when they close. */
     static final String ACTION_LAUNCHER_SETTINGS = "com.appletv.launcher.action.LAUNCHER_SETTINGS";
     static final String ACTION_SHOW_WELCOME = "com.appletv.launcher.action.SHOW_WELCOME";
+    static final String ACTION_POST_UPDATE = "com.appletv.launcher.action.POST_UPDATE";
     static final String ACTION_HOME_EDIT_MODE = "com.appletv.launcher.action.HOME_EDIT_MODE";
     /** Home row width: configured app slots plus the fixed Apps and Settings tiles. */
     static int COLUMNS = 4;
@@ -217,6 +230,8 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     private ApplePlaybackProgressView homePlayerProgress;
     private int renderedLyricsLineIndex = -1;
     private String renderedLyricsTrackKey = "";
+    private long homePlayerLyricsVisibilityGeneration;
+    private boolean homePlayerLyricsVisibilityTransitionActive;
     private NowPlayingListener.Snapshot homePlayerSnapshot;
     private final HomePlayerSeekState homePlayerSeekState = new HomePlayerSeekState();
     private volatile long homePlayerSeekGeneration;
@@ -251,6 +266,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     private long homePlayerRenderGeneration;
     private long homePlayerVisibilityGeneration;
     private boolean homePlayerExpanded;
+    private long lastExpandedPlayerUpAt;
     private boolean screensaverTransitionActive;
     private boolean homeScreensaverDismissing;
     private int homeHeaderVisibilityBeforeOverlay = -1;
@@ -279,12 +295,15 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     private boolean animations;
     private boolean advancedEffects;
     private TextView greeting;
-    private TextView btnStore;
     private View btnInputs;
     private TextView btnWifi;
     private TextView btnRecentApps;
     private TextView btnSettings;
     private TextView btnPower;
+    private LinearLayout homeUpdateCard;
+    private View homeUpdateCardDot;
+    private TextView homeUpdateCardStatus;
+    private TextView homeUpdateCardCountdown;
     private CharSequence wifiDisplayLabel;
     private TextView shamsiDate;
     private boolean shamsi;
@@ -344,6 +363,22 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     private boolean welcomeTilesReady;
     private boolean welcomeDrawn;
     private final Runnable welcomeDismiss = this::hideWelcomeOverlay;
+    private TextView welcomeTitleView;
+    private TextView welcomeSubtitleView;
+    private boolean postUpdateCalibrationRequested;
+    private long homeStartupStartedAtUptimeMs;
+    private static final String HOME_TUTORIAL_VERSION_KEY = "home_tutorial_version_code";
+    private static final String PLAYER_TUTORIAL_VERSION_KEY = "player_tutorial_version_code";
+    private FrameLayout tutorialOverlay;
+    private FrameLayout tutorialMenuOverlay;
+    private TextView tutorialTitle;
+    private TextView tutorialBody;
+    private TextView tutorialProgress;
+    private TextView tutorialNext;
+    private Runnable pendingTutorialStart;
+    private boolean tutorialIsPlayer;
+    private boolean tutorialStartScheduled;
+    private int tutorialStep;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable launcherReleaseCheckTick = new Runnable() {
@@ -501,6 +536,10 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        homeStartupStartedAtUptimeMs = android.os.SystemClock.uptimeMillis();
+        Intent launchIntent = getIntent();
+        postUpdateCalibrationRequested = launchIntent != null
+                && ACTION_POST_UPDATE.equals(launchIntent.getAction());
         spotifyPlaybackExecutor = Executors.newSingleThreadExecutor(task -> {
             Thread thread = new Thread(task, "Launcher-SpotifyPlayback");
             thread.setDaemon(true);
@@ -515,7 +554,10 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         boolean lowApiPerformanceProfile = Build.VERSION.SDK_INT < Build.VERSION_CODES.S;
         animations = cfg.animations;
         reducedMotion = cfg.reducedMotion;
-        advancedEffects = animations && cfg.advancedEffects && !reducedMotion && !lowApiPerformanceProfile;
+        boolean performanceLimited = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
+                .getBoolean("launcher_performance_limited", false);
+        advancedEffects = animations && cfg.advancedEffects && !reducedMotion
+                && !lowApiPerformanceProfile && !performanceLimited;
         festival = cfg.festival;
         festive = festival.active(LocalDate.now());
         liveTvPkg = cfg.liveTvPackage;
@@ -573,7 +615,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
                 return true;
             }
             if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                btnStore.requestFocus();
+                btnRecentApps.requestFocus();
                 return true;
             }
             if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
@@ -647,7 +689,11 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         }
         if (lightAppearance) heroName.setTextColor(Color.rgb(28, 28, 30));
         greeting = findViewById(R.id.greeting);
-        if (lightAppearance) greeting.setTextColor(Color.rgb(90, 90, 95));
+        if (lightAppearance) {
+            int headerTextColor = Color.rgb(90, 90, 95);
+            greeting.setTextColor(headerTextColor);
+            ((TextView) findViewById(R.id.date)).setTextColor(headerTextColor);
+        }
         greetingColor = greeting.getCurrentTextColor();
         btnWifi = findViewById(R.id.btnWifi);
         shamsiDate = findViewById(R.id.shamsiDate);
@@ -768,12 +814,10 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
             }
         }
 
-        btnStore = findViewById(R.id.btnStore);
         btnInputs = findViewById(R.id.btnInputs);
         btnRecentApps = findViewById(R.id.btnRecentApps);
         btnSettings = findViewById(R.id.btnSettings);
         btnPower = findViewById(R.id.btnPower);
-        btnStore.setOnClickListener(v -> openAppStore());
         btnInputs.setOnClickListener(v -> showInputs());
         btnRecentApps.setOnClickListener(v -> openRecentApps());
         btnWifi.setOnClickListener(v -> openNetworkPill());
@@ -801,20 +845,19 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
                 focusTile(lastFocused % COLUMNS);
                 return true;
             }
-            int firstButton = R.id.btnStore;
+            int firstButton = R.id.btnRecentApps;
             int leftButton = rtlMenuBar ? R.id.btnPower : firstButton;
             int rightButton = rtlMenuBar ? firstButton : R.id.btnPower;
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return v.getId() == leftButton;
             return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == rightButton;
         };
-        btnStore.setOnKeyListener(pillKeys);
         btnInputs.setOnKeyListener(pillKeys);
         btnWifi.setOnKeyListener(pillKeys);
         btnRecentApps.setOnKeyListener(pillKeys);
         btnSettings.setOnKeyListener(pillKeys);
         btnPower.setOnKeyListener(pillKeys);
         for (View button : new View[]{
-                btnStore, btnInputs, btnWifi, btnRecentApps, btnSettings, btnPower}) {
+                btnInputs, btnWifi, btnRecentApps, btnSettings, btnPower}) {
             button.setOnFocusChangeListener((view, focused) -> {
                 view.animate().translationY(focused ? -3f * density : 0f)
                         .alpha(focused ? 1f : 0.92f)
@@ -859,7 +902,8 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
             if (!openedRequestedScreen) openedRequestedScreen = openHomeEditModeIfAsked(getIntent());
         }
         boolean welcomeRequested = getIntent() != null
-                && ACTION_SHOW_WELCOME.equals(getIntent().getAction());
+                && (ACTION_SHOW_WELCOME.equals(getIntent().getAction())
+                || ACTION_POST_UPDATE.equals(getIntent().getAction()));
         if (!openedRequestedScreen && welcomeRequested) showWelcomeOverlay();
     }
 
@@ -894,8 +938,11 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         String name = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
                 .getString("account_name", "").trim();
         TextView title = new TextView(this);
-        title.setText(name.isEmpty() ? getString(R.string.welcome_back)
+        title.setText(postUpdateCalibrationRequested
+                ? getString(R.string.update_calibration_title)
+                : name.isEmpty() ? getString(R.string.welcome_back)
                 : getString(R.string.welcome_back_named, name));
+        welcomeTitleView = title;
         title.setTextColor(Color.WHITE);
         title.setTextSize(34);
         title.setTypeface(android.graphics.Typeface.create(
@@ -905,7 +952,9 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         TextView subtitle = new TextView(this);
-        subtitle.setText(R.string.loading_please_wait);
+        subtitle.setText(postUpdateCalibrationRequested
+                ? R.string.update_calibration_message : R.string.loading_please_wait);
+        welcomeSubtitleView = subtitle;
         subtitle.setTextColor(0xCCFFFFFF);
         subtitle.setTextSize(19);
         subtitle.setGravity(Gravity.CENTER);
@@ -973,10 +1022,12 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
 
     private void markTilesReady() {
         tilesReady = true;
+        completePostUpdateCalibration();
         if (welcomeOverlay != null) {
             welcomeTilesReady = true;
             scheduleWelcomeDismiss();
         }
+        maybeStartHomeTutorial();
     }
 
     private void hideWelcomeOverlay() {
@@ -987,10 +1038,251 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         welcomeDrawn = false;
         overlay.animate().alpha(0f).setDuration(220).withEndAction(() -> {
             if (overlay.getParent() == root) root.removeView(overlay);
+            welcomeTitleView = null;
+            welcomeSubtitleView = null;
             restoreFocus();
+            maybeShowLauncherUpdateDisclosure();
+            maybeStartHomeTutorial();
         }).start();
         for (ValueAnimator animation : welcomeDotAnimations) animation.cancel();
         welcomeDotAnimations.clear();
+    }
+
+    private void completePostUpdateCalibration() {
+        if (!postUpdateCalibrationRequested) return;
+        long startupMs = Math.max(0L,
+                android.os.SystemClock.uptimeMillis() - homeStartupStartedAtUptimeMs);
+        boolean performanceLimited = startupMs >= 1600L;
+        getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE).edit()
+                .putLong("launcher_startup_calibration_ms", startupMs)
+                .putBoolean("launcher_performance_limited", performanceLimited)
+                .apply();
+        postUpdateCalibrationRequested = false;
+
+        String name = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
+                .getString("account_name", "").trim();
+        if (welcomeTitleView != null) {
+            welcomeTitleView.setText(name.isEmpty() ? getString(R.string.welcome_back)
+                    : getString(R.string.welcome_back_named, name));
+        }
+        if (welcomeSubtitleView != null) {
+            int profile = performanceLimited
+                    ? R.string.update_calibration_profile_light
+                    : R.string.update_calibration_profile_full;
+            welcomeSubtitleView.setText(getString(R.string.update_calibration_complete,
+                    startupMs, getString(profile)));
+        }
+        welcomeShownAt = android.os.SystemClock.uptimeMillis();
+    }
+
+    private void maybeStartHomeTutorial() {
+        if (!homeResumed || !tilesReady || tutorialOverlay != null
+                || welcomeOverlay != null || tutorialStartScheduled
+                || updateTermsDialogShowing || updateAvailableDialogShowing
+                || !LauncherUpdateDialogs.areCurrentTermsAccepted(this)) return;
+        SharedPreferences preferences = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
+        int currentVersion = (int) LauncherAppVersion.code(this);
+        if (!preferences.getBoolean("setup_wizard_complete", true)
+                || preferences.getInt(HOME_TUTORIAL_VERSION_KEY, 0) >= currentVersion) return;
+        tutorialStartScheduled = true;
+        pendingTutorialStart = () -> {
+            tutorialStartScheduled = false;
+            pendingTutorialStart = null;
+            if (!homeResumed || isFinishing() || isDestroyed() || tutorialOverlay != null
+                    || welcomeOverlay != null || updateTermsDialogShowing
+                    || updateAvailableDialogShowing
+                    || !LauncherUpdateDialogs.areCurrentTermsAccepted(this)) return;
+            showFeatureTutorial(false);
+        };
+        handler.postDelayed(pendingTutorialStart, 450L);
+    }
+
+    private void maybeStartPlayerTutorial() {
+        if (!homeResumed || tutorialOverlay != null || welcomeOverlay != null
+                || updateTermsDialogShowing || updateAvailableDialogShowing
+                || !LauncherUpdateDialogs.areCurrentTermsAccepted(this)
+                || !NowPlayingListener.hasActiveSpotifyRemoteSnapshot()) return;
+        SharedPreferences preferences = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
+        int currentVersion = (int) LauncherAppVersion.code(this);
+        if (preferences.getInt(HOME_TUTORIAL_VERSION_KEY, 0) < currentVersion
+                || preferences.getInt(PLAYER_TUTORIAL_VERSION_KEY, 0) >= currentVersion) return;
+        showFeatureTutorial(true);
+    }
+
+    private void showFeatureTutorial(boolean playerTutorial) {
+        if (root == null || tutorialOverlay != null || isFinishing() || isDestroyed()) return;
+        tutorialIsPlayer = playerTutorial;
+        tutorialStep = 0;
+        FrameLayout overlay = new FrameLayout(this);
+        overlay.setBackgroundColor(0xB8000000);
+        overlay.setFocusable(true);
+        overlay.setFocusableInTouchMode(true);
+        overlay.setClickable(true);
+
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(30), dp(26), dp(30), dp(24));
+        panel.setBackgroundResource(R.drawable.glass_panel);
+        panel.setElevation(dp(22));
+
+        tutorialTitle = new TextView(this);
+        tutorialTitle.setTextColor(Color.WHITE);
+        tutorialTitle.setTextSize(25f);
+        tutorialTitle.setTypeface(android.graphics.Typeface.DEFAULT,
+                android.graphics.Typeface.BOLD);
+        panel.addView(tutorialTitle);
+
+        tutorialBody = new TextView(this);
+        tutorialBody.setTextColor(0xE6FFFFFF);
+        tutorialBody.setTextSize(17f);
+        tutorialBody.setLineSpacing(dp(4), 1f);
+        LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(
+                dp(620), ViewGroup.LayoutParams.WRAP_CONTENT);
+        bodyParams.topMargin = dp(14);
+        panel.addView(tutorialBody, bodyParams);
+
+        tutorialProgress = new TextView(this);
+        tutorialProgress.setTextColor(0xBFFFFFFF);
+        tutorialProgress.setTextSize(13f);
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        progressParams.topMargin = dp(18);
+        panel.addView(tutorialProgress, progressParams);
+
+        tutorialNext = new TextView(this);
+        tutorialNext.setFocusable(true);
+        tutorialNext.setClickable(true);
+        tutorialNext.setGravity(Gravity.CENTER);
+        tutorialNext.setTextColor(Color.WHITE);
+        tutorialNext.setTextSize(15f);
+        tutorialNext.setTypeface(android.graphics.Typeface.DEFAULT,
+                android.graphics.Typeface.BOLD);
+        tutorialNext.setPadding(dp(22), dp(10), dp(22), dp(10));
+        tutorialNext.setBackgroundResource(R.drawable.home_shortcut_pill_bg);
+        LinearLayout.LayoutParams nextParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(48));
+        nextParams.topMargin = dp(16);
+        nextParams.gravity = Gravity.END;
+        panel.addView(tutorialNext, nextParams);
+        tutorialNext.setOnClickListener(view -> advanceFeatureTutorial());
+        overlay.addView(panel, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER));
+        root.addView(overlay, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        tutorialOverlay = overlay;
+        updateTutorialContent();
+        overlay.bringToFront();
+        tutorialNext.requestFocus();
+    }
+
+    private void updateTutorialContent() {
+        if (tutorialTitle == null || tutorialBody == null
+                || tutorialProgress == null || tutorialNext == null) return;
+        int[] steps = tutorialIsPlayer
+                ? new int[]{R.string.tutorial_player_step_1, R.string.tutorial_player_step_2,
+                R.string.tutorial_player_step_3}
+                : new int[]{R.string.tutorial_home_step_1, R.string.tutorial_home_step_2,
+                R.string.tutorial_home_step_3};
+        tutorialTitle.setText(tutorialIsPlayer
+                ? R.string.tutorial_player_title : R.string.tutorial_home_title);
+        tutorialBody.setText(steps[tutorialStep]);
+        tutorialProgress.setText(getString(R.string.tutorial_step_format,
+                tutorialStep + 1, steps.length));
+        tutorialNext.setText(tutorialStep == steps.length - 1
+                ? R.string.tutorial_finish : R.string.tutorial_next);
+    }
+
+    private void advanceFeatureTutorial() {
+        if (tutorialStep < 2) {
+            tutorialStep++;
+            updateTutorialContent();
+        } else {
+            finishFeatureTutorial();
+        }
+    }
+
+    private void finishFeatureTutorial() {
+        getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE).edit()
+                .putInt(tutorialIsPlayer ? PLAYER_TUTORIAL_VERSION_KEY
+                        : HOME_TUTORIAL_VERSION_KEY, (int) LauncherAppVersion.code(this))
+                .apply();
+        dismissTutorialLayers();
+        showPendingLauncherUpdate();
+        maybeStartPlayerTutorial();
+    }
+
+    private void dismissTutorialLayers() {
+        if (pendingTutorialStart != null) handler.removeCallbacks(pendingTutorialStart);
+        pendingTutorialStart = null;
+        tutorialStartScheduled = false;
+        if (tutorialMenuOverlay != null && root != null) root.removeView(tutorialMenuOverlay);
+        if (tutorialOverlay != null && root != null) root.removeView(tutorialOverlay);
+        tutorialMenuOverlay = null;
+        tutorialOverlay = null;
+        tutorialTitle = null;
+        tutorialBody = null;
+        tutorialProgress = null;
+        tutorialNext = null;
+        restoreFocus();
+    }
+
+    private void showTutorialOptions() {
+        if (tutorialOverlay == null || tutorialMenuOverlay != null) return;
+        FrameLayout menu = new FrameLayout(this);
+        menu.setBackgroundColor(0x99000000);
+        menu.setFocusable(true);
+        menu.setFocusableInTouchMode(true);
+        menu.setClickable(true);
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(24), dp(20), dp(24), dp(20));
+        panel.setBackgroundResource(R.drawable.glass_panel);
+
+        TextView title = new TextView(this);
+        title.setText(R.string.tutorial_menu_title);
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(20f);
+        title.setTypeface(android.graphics.Typeface.DEFAULT,
+                android.graphics.Typeface.BOLD);
+        panel.addView(title);
+
+        TextView skip = createTutorialMenuButton(R.string.tutorial_skip);
+        TextView cancel = createTutorialMenuButton(R.string.tutorial_cancel);
+        LinearLayout.LayoutParams skipParams = new LinearLayout.LayoutParams(dp(250), dp(48));
+        skipParams.topMargin = dp(14);
+        panel.addView(skip, skipParams);
+        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(dp(250), dp(48));
+        cancelParams.topMargin = dp(8);
+        panel.addView(cancel, cancelParams);
+        skip.setOnClickListener(view -> finishFeatureTutorial());
+        cancel.setOnClickListener(view -> closeTutorialOptions());
+        menu.addView(panel, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER));
+        root.addView(menu, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        tutorialMenuOverlay = menu;
+        menu.bringToFront();
+        skip.requestFocus();
+    }
+
+    private TextView createTutorialMenuButton(int textResource) {
+        TextView button = new TextView(this);
+        button.setFocusable(true);
+        button.setClickable(true);
+        button.setGravity(Gravity.CENTER);
+        button.setText(textResource);
+        button.setTextColor(Color.WHITE);
+        button.setTextSize(15f);
+        button.setBackgroundResource(R.drawable.home_shortcut_pill_bg);
+        return button;
+    }
+
+    private void closeTutorialOptions() {
+        if (tutorialMenuOverlay != null && root != null) root.removeView(tutorialMenuOverlay);
+        tutorialMenuOverlay = null;
+        if (tutorialNext != null) tutorialNext.requestFocus();
     }
 
     private boolean openLauncherSettingsIfAsked(Intent intent) {
@@ -1036,6 +1328,13 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         super.onNewIntent(intent);
         if (openLauncherSettingsIfAsked(intent)) return;
         if (openHomeEditModeIfAsked(intent)) return;
+        if (intent != null && ACTION_POST_UPDATE.equals(intent.getAction())) {
+            postUpdateCalibrationRequested = true;
+            homeStartupStartedAtUptimeMs = android.os.SystemClock.uptimeMillis();
+            setIntent(new Intent(Intent.ACTION_MAIN));
+            showWelcomeOverlay();
+            return;
+        }
         if (intent != null && ACTION_SHOW_WELCOME.equals(intent.getAction())) {
             setIntent(new Intent(Intent.ACTION_MAIN));
             showWelcomeOverlay();
@@ -1125,6 +1424,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         launcherPausedAtUptimeMs = 0L;
         screensaverActivity = new WeakReference<>(this);
         activeInstance = this;
+        refreshBackgroundUpdateCard();
         NowPlayingListener.Snapshot resumeAfterAudioSettings = audioOutputResumeSnapshot;
         audioOutputResumeSnapshot = null;
         if (resumeAfterAudioSettings != null) {
@@ -1170,12 +1470,14 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         }
         scheduleHomeScreensaver();
         maybeShowLauncherUpdateDisclosure();
+        maybeStartHomeTutorial();
+        maybeStartPlayerTutorial();
         handler.removeCallbacks(launcherReleaseCheckTick);
         handler.postDelayed(launcherReleaseCheckTick, LAUNCHER_RELEASE_CHECK_INTERVAL_MS);
     }
 
     private void maybeShowLauncherUpdateDisclosure() {
-        if (!homeResumed || isFinishing() || isDestroyed()) return;
+        if (!homeResumed || isFinishing() || isDestroyed() || welcomeOverlay != null) return;
         if (!LauncherUpdateDialogs.areCurrentTermsAccepted(this)) {
             if (updateTermsDialogShowing) return;
             updateTermsDialogShowing = true;
@@ -1184,12 +1486,104 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
                         updateTermsDialogShowing = false;
                         checkForLauncherUpdate();
                         showPendingLauncherUpdate();
+                        maybeStartHomeTutorial();
                     },
                     () -> updateTermsDialogShowing = false);
             return;
         }
         checkForLauncherUpdate();
         showPendingLauncherUpdate();
+        maybeStartHomeTutorial();
+    }
+
+    static void notifyBackgroundUpdateChanged() {
+        MainActivity current = activeInstance;
+        if (current != null) {
+            current.handler.post(current::refreshBackgroundUpdateCard);
+        }
+    }
+
+    private void refreshBackgroundUpdateCard() {
+        if (root == null || isFinishing() || isDestroyed()) return;
+        if (!LauncherUpdateActivity.hasBackgroundSession()) {
+            handler.removeCallbacks(backgroundUpdateCardTick);
+            if (homeUpdateCard != null) homeUpdateCard.setVisibility(View.GONE);
+            return;
+        }
+        ensureBackgroundUpdateCard();
+        boolean connected = LauncherUpdateActivity.isBackgroundSessionConnected();
+        boolean installPending = LauncherUpdateActivity.isBackgroundInstallPending();
+        homeUpdateCard.setVisibility(View.VISIBLE);
+        homeUpdateCardStatus.setText(installPending
+                ? R.string.launcher_update_home_install_pending
+                : connected ? R.string.launcher_update_home_connected
+                : R.string.launcher_update_home_waiting);
+        long remaining = LauncherUpdateActivity.backgroundSessionRemainingMillis();
+        if (remaining < 0) {
+            homeUpdateCardCountdown.setText(R.string.launcher_update_home_processing);
+        } else {
+            long seconds = Math.max(0L, (remaining + 999L) / 1000L);
+            String formatted = String.format(Locale.getDefault(), "%02d:%02d",
+                    seconds / 60L, seconds % 60L);
+            homeUpdateCardCountdown.setText(
+                    getString(R.string.launcher_update_home_countdown, formatted));
+        }
+        GradientDrawable dot = new GradientDrawable();
+        dot.setShape(GradientDrawable.OVAL);
+        dot.setColor(installPending ? 0xFF8F7CFF : connected ? 0xFF52D6BA : 0xFFFFC45C);
+        homeUpdateCardDot.setBackground(dot);
+        handler.removeCallbacks(backgroundUpdateCardTick);
+        if (homeResumed) handler.postDelayed(backgroundUpdateCardTick, 1000L);
+    }
+
+    private void ensureBackgroundUpdateCard() {
+        if (homeUpdateCard != null) return;
+        homeUpdateCard = new LinearLayout(this);
+        homeUpdateCard.setOrientation(LinearLayout.HORIZONTAL);
+        homeUpdateCard.setGravity(Gravity.CENTER_VERTICAL);
+        homeUpdateCard.setPadding(dp(16), dp(12), dp(18), dp(12));
+        homeUpdateCard.setBackgroundResource(R.drawable.glass_panel);
+        homeUpdateCard.setElevation(dp(18));
+        homeUpdateCard.setFocusable(true);
+        homeUpdateCard.setClickable(true);
+        homeUpdateCard.setVisibility(View.GONE);
+        homeUpdateCard.setOnClickListener(view ->
+                LauncherUpdateActivity.openBackgroundSession(MainActivity.this));
+        homeUpdateCard.setOnFocusChangeListener((view, focused) -> {
+            float scale = focused ? 1.04f : 1f;
+            view.animate().scaleX(scale).scaleY(scale).setDuration(140L).start();
+        });
+
+        homeUpdateCardDot = new View(this);
+        LinearLayout.LayoutParams dotParams =
+                new LinearLayout.LayoutParams(dp(10), dp(10));
+        dotParams.setMarginEnd(dp(12));
+        homeUpdateCard.addView(homeUpdateCardDot, dotParams);
+
+        LinearLayout text = new LinearLayout(this);
+        text.setOrientation(LinearLayout.VERTICAL);
+        homeUpdateCard.addView(text, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        TextView title = new TextView(this);
+        title.setText(R.string.launcher_update_home_title);
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(15f);
+        title.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        text.addView(title);
+        homeUpdateCardStatus = new TextView(this);
+        homeUpdateCardStatus.setTextColor(0xFFE6E9F1);
+        homeUpdateCardStatus.setTextSize(12f);
+        text.addView(homeUpdateCardStatus);
+        homeUpdateCardCountdown = new TextView(this);
+        homeUpdateCardCountdown.setTextColor(0xFFC9CEDA);
+        homeUpdateCardCountdown.setTextSize(11f);
+        text.addView(homeUpdateCardCountdown);
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP | Gravity.START);
+        params.setMargins(dp(40), dp(30), dp(20), 0);
+        root.addView(homeUpdateCard, params);
     }
 
     private void checkForLauncherUpdate() {
@@ -1203,7 +1597,8 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     }
 
     private void showPendingLauncherUpdate() {
-        if (!homeResumed || isFinishing() || isDestroyed() || updateAvailableDialogShowing
+        if (!homeResumed || isFinishing() || isDestroyed() || tutorialOverlay != null
+                || updateAvailableDialogShowing
                 || pendingLauncherRelease == null
                 || !LauncherUpdateDialogs.areCurrentTermsAccepted(this)) return;
         LauncherReleaseChecker.Release release = pendingLauncherRelease;
@@ -1212,10 +1607,14 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         boolean shown = LauncherUpdateDialogs.showAvailableUpdate(this, release,
                 () -> {
                     if (homeResumed && !isFinishing() && !isDestroyed()) {
-                        startActivity(new Intent(this, LauncherUpdateActivity.class));
+                        startActivity(LauncherUpdateActivity.createIntent(this));
                     }
                 },
-                () -> updateAvailableDialogShowing = false);
+                () -> {
+                    updateAvailableDialogShowing = false;
+                    maybeStartHomeTutorial();
+                    maybeStartPlayerTutorial();
+                });
         if (!shown) updateAvailableDialogShowing = false;
     }
 
@@ -1325,6 +1724,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         if (homePlayerExpanded && snapshot != null && snapshot.playing) {
             handler.postDelayed(homePlayerProgressTick, 1000);
         }
+        maybeStartPlayerTutorial();
     }
 
     private void cancelHomePlayerSessionLossGrace() {
@@ -1638,6 +2038,16 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         return value == null || value.trim().isEmpty() ? getString(fallback) : value;
     }
 
+    private String localizedPlayerLyrics(String lyrics) {
+        if (lyrics == null) return null;
+        String normalized = lyrics.trim();
+        if ("Dazu gibt es noch keine Songtexte".equalsIgnoreCase(normalized)
+                || "Dazu gibt es noch keine Songtexte.".equalsIgnoreCase(normalized)) {
+            return getString(R.string.now_playing_lyrics_unavailable);
+        }
+        return lyrics;
+    }
+
     private void renderHomePlayerLyrics(NowPlayingListener.Snapshot snapshot, long positionMs) {
         if (snapshot == null || !isHomePlayerLyricsEnabled()) {
             hideHomePlayerLyrics();
@@ -1648,13 +2058,14 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
                 getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE));
         String trackKey = homePlayerLyricsTrackKey(snapshot);
         if (LyricsProvider.PLAYER.equals(provider)) {
+            String playerLyrics = localizedPlayerLyrics(snapshot.lyrics);
             List<LrclibLyricsClient.LyricLine> synced =
-                    LrclibLyricsClient.parseSyncedLyrics(snapshot.lyrics);
+                    LrclibLyricsClient.parseSyncedLyrics(playerLyrics);
             if (!synced.isEmpty()) {
                 renderTimedLyrics(synced, positionMs, trackKey,
                         snapshot.playing, snapshot.playbackSpeed);
             } else {
-                renderStaticLyrics(snapshot.lyrics, trackKey);
+                renderStaticLyrics(playerLyrics, trackKey);
             }
             return;
         } else if (trackKey.equals(fetchedHomeLyricsTrackKey)
@@ -1751,7 +2162,8 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         homePlayerLyricsPanel.setVisibility(View.VISIBLE);
         homePlayerLyricsList.setContentDescription(lines.get(safeIndex));
         homePlayerLyricsPanel.animate().cancel();
-        if (animate && !trackChanged && lineChanged && previousIndex >= 0
+        if (animate && !homePlayerLyricsVisibilityTransitionActive
+                && !trackChanged && lineChanged && previousIndex >= 0
                 && Math.abs(safeIndex - previousIndex) == 1 && !reducedMotion) {
             float direction = safeIndex > previousIndex ? 18f : -18f;
             homePlayerLyricsPanel.setAlpha(0.3f);
@@ -1761,7 +2173,9 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
                     .setInterpolator(new android.view.animation.DecelerateInterpolator())
                     .start();
         } else {
-            homePlayerLyricsPanel.setAlpha(1f);
+            if (!homePlayerLyricsVisibilityTransitionActive) {
+                homePlayerLyricsPanel.setAlpha(1f);
+            }
             homePlayerLyricsPanel.setTranslationY(0f);
         }
         renderedLyricsTrackKey = trackKey;
@@ -1769,8 +2183,11 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     }
 
     private void hideHomePlayerLyrics() {
-        if (homePlayerLyricsPanel != null) homePlayerLyricsPanel.setVisibility(View.GONE);
-        if (homePlayerLyricsAdapter != null) {
+        if (!homePlayerLyricsVisibilityTransitionActive && homePlayerLyricsPanel != null) {
+            homePlayerLyricsPanel.setVisibility(View.GONE);
+            homePlayerLyricsPanel.setAlpha(1f);
+        }
+        if (homePlayerLyricsAdapter != null && !homePlayerLyricsVisibilityTransitionActive) {
             homePlayerLyricsAdapter.setLyrics(java.util.Collections.emptyList(), -1);
         }
         renderedLyricsTrackKey = "";
@@ -1789,7 +2206,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
 
     private void toggleHomePlayerLyricsVisibility() {
         SharedPreferences preferences = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
-        if (isHomePlayerLyricsVisible()) {
+        if (isHomePlayerLyricsEnabled() && isHomePlayerLyricsVisible()) {
             preferences.edit().putBoolean("player_lyrics_enabled", false).apply();
             if (lrclibRequestRunning
                     && LyricsProvider.LRCLIB.equals(LyricsProvider.selected(preferences))) {
@@ -1798,12 +2215,72 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
             lyricsRequestGeneration++;
             lrclibRequestRunning = false;
             lrclibRequestTrackKey = "";
-            hideHomePlayerLyrics();
+            animateHomePlayerLyricsVisibility(false, null);
         } else {
             preferences.edit().putBoolean("player_lyrics_enabled", true).apply();
-            showNowPlayingLyrics();
-            if (homePlayerExpanded) renderHomePlayer();
+            animateHomePlayerLyricsVisibility(true, () -> {
+                showNowPlayingLyrics();
+                if (homePlayerExpanded) renderHomePlayer();
+            });
         }
+    }
+
+    private void animateHomePlayerLyricsVisibility(boolean visible, Runnable showLyrics) {
+        long generation = ++homePlayerLyricsVisibilityGeneration;
+        homePlayerProgress.animate().cancel();
+        if (!animations || reducedMotion || !homePlayerExpanded || !homePlayerPanel.isLaidOut()) {
+            homePlayerLyricsVisibilityTransitionActive = false;
+            homePlayerProgress.setAlpha(1f);
+            if (visible) showLyrics.run();
+            else hideHomePlayerLyrics();
+            return;
+        }
+
+        TransitionManager.endTransitions((ViewGroup) homePlayerPanel);
+        homePlayerLyricsPanel.animate().cancel();
+        homePlayerLyricsPanel.setAlpha(1f);
+        homePlayerLyricsPanel.setTranslationY(0f);
+        homePlayerLyricsVisibilityTransitionActive = true;
+        homePlayerProgress.animate().alpha(0f).setDuration(100)
+                .withEndAction(() -> {
+                    if (generation != homePlayerLyricsVisibilityGeneration
+                            || isFinishing() || isDestroyed()) {
+                        homePlayerProgress.setAlpha(1f);
+                        return;
+                    }
+
+                    ChangeBounds bounds = new ChangeBounds();
+                    bounds.setDuration(260);
+                    Fade lyricsFade = new Fade(visible ? Fade.IN : Fade.OUT);
+                    lyricsFade.addTarget(homePlayerLyricsPanel);
+                    lyricsFade.setDuration(220);
+                    TransitionSet transition = new TransitionSet();
+                    transition.setOrdering(TransitionSet.ORDERING_TOGETHER);
+                    transition.addTransition(bounds);
+                    transition.addTransition(lyricsFade);
+
+                    homePlayerLyricsVisibilityTransitionActive = true;
+                    TransitionManager.beginDelayedTransition(
+                            (ViewGroup) homePlayerPanel, transition);
+                    if (visible) {
+                        showLyrics.run();
+                    } else {
+                        homePlayerLyricsPanel.setVisibility(View.GONE);
+                        renderedLyricsTrackKey = "";
+                        renderedLyricsLineIndex = -1;
+                    }
+                    homePlayerProgress.animate().alpha(1f).setStartDelay(80)
+                            .setDuration(180).start();
+                    handler.postDelayed(() -> {
+                        if (generation != homePlayerLyricsVisibilityGeneration) return;
+                        homePlayerLyricsVisibilityTransitionActive = false;
+                        homePlayerLyricsPanel.setAlpha(1f);
+                        if (homePlayerLyricsPanel.getVisibility() != View.VISIBLE) {
+                            homePlayerLyricsAdapter.setLyrics(
+                                    java.util.Collections.emptyList(), -1);
+                        }
+                    }, 300);
+                }).start();
     }
 
     private void renderHomePlayerProgress() {
@@ -2316,6 +2793,15 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         }
         boolean show = expanded && homePlayerSnapshot != null;
         if (homePlayerExpanded == show) return;
+        homePlayerLyricsVisibilityGeneration++;
+        if (homePlayerPanel.isLaidOut()) {
+            TransitionManager.endTransitions((ViewGroup) homePlayerPanel);
+        }
+        homePlayerLyricsVisibilityTransitionActive = false;
+        homePlayerProgress.animate().cancel();
+        homePlayerProgress.setAlpha(1f);
+        homePlayerLyricsPanel.animate().cancel();
+        homePlayerLyricsPanel.setAlpha(1f);
         boolean focusPlayerTileOnCollapse = !show && homePlayerProgress.hasFocus();
         homePlayerExpanded = show;
         homePlayerExpandedForDream = show;
@@ -2460,6 +2946,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         homeResumed = false;
         releaseCheckStarted = false;
         handler.removeCallbacks(launcherReleaseCheckTick);
+        handler.removeCallbacks(backgroundUpdateCardTick);
         if (homePlayerTitleRow != null) {
             homePlayerTitleRow.setIndicatorPlaying(false, false);
             homePlayerTitleRow.setMarqueeEnabled(false);
@@ -2547,6 +3034,11 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
 
     @Override
     public void onBackPressed() {
+        if (tutorialOverlay != null) {
+            if (tutorialMenuOverlay != null) closeTutorialOptions();
+            else showTutorialOptions();
+            return;
+        }
         if (homePlayerExpanded) setHomePlayerExpanded(false);
     }
 
@@ -2567,24 +3059,47 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         if (event.getAction() == KeyEvent.ACTION_DOWN) scheduleHomeScreensaver();
         int keyCode = event.getKeyCode();
         int scanCode = event.getScanCode();
-        if (homePlayerExpanded && event.getAction() == KeyEvent.ACTION_DOWN
-                && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-            if (homePlayerProgress.hasFocus()) {
-                btnStore.requestFocus();
+        boolean menuKey = keyCode == KeyEvent.KEYCODE_SETTINGS
+                || keyCode == KeyEvent.KEYCODE_BUTTON_2 || keyCode == KeyEvent.KEYCODE_APP_SWITCH
+                || keyCode == KeyEvent.KEYCODE_MENU || scanCode == 150 || scanCode == 580;
+        if (tutorialOverlay != null) {
+            if (menuKey) {
+                if (event.getAction() == KeyEvent.ACTION_UP && event.getRepeatCount() == 0) {
+                    if (tutorialMenuOverlay == null) showTutorialOptions();
+                    else closeTutorialOptions();
+                }
                 return true;
             }
-            if (grid.hasFocus()) {
+            if (keyCode == KeyEvent.KEYCODE_BACK) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (tutorialMenuOverlay != null) closeTutorialOptions();
+                    else showTutorialOptions();
+                }
+                return true;
+            }
+        }
+        if (event.getAction() == KeyEvent.ACTION_DOWN
+                && keyCode != KeyEvent.KEYCODE_DPAD_UP) {
+            lastExpandedPlayerUpAt = 0;
+        }
+        if (homePlayerExpanded && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+            if (event.getAction() != KeyEvent.ACTION_DOWN) return true;
+            if (event.getRepeatCount() > 0) return true;
+            long now = android.os.SystemClock.uptimeMillis();
+            boolean doublePress = lastExpandedPlayerUpAt > 0
+                    && now - lastExpandedPlayerUpAt <= HOME_PLAYER_UP_DOUBLE_PRESS_MS;
+            lastExpandedPlayerUpAt = doublePress ? 0 : now;
+            if (doublePress) {
                 homePlayerProgress.requestFocus();
-                return true;
+            } else if (homePlayerProgress.hasFocus() || !isTopBarButton(getCurrentFocus())) {
+                btnRecentApps.requestFocus();
             }
+            return true;
         }
         if (homeEditMode && keyCode == KeyEvent.KEYCODE_BACK) {
             if (event.getAction() == KeyEvent.ACTION_DOWN) setHomeEditMode(false);
             return true;
         }
-        boolean menuKey = keyCode == KeyEvent.KEYCODE_SETTINGS
-                || keyCode == KeyEvent.KEYCODE_BUTTON_2 || keyCode == KeyEvent.KEYCODE_APP_SWITCH
-                || keyCode == KeyEvent.KEYCODE_MENU || scanCode == 150 || scanCode == 580;
         SpotifyPlaylistTrackEntry selectedTrack = focusedAddedSpotifyTrack;
         if (menuKey && selectedTrack != null && selectedTrack.addedByLauncher
                 && selectedTrack.row.isFocused()) {
@@ -2747,7 +3262,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         addNowPlayingMenuRow(rows, popup, R.drawable.ic_media_previous,
                 R.string.now_playing_previous, () -> skipHomePlayerTrack(false));
         boolean spotifyPlayback = NowPlayingListener.isSpotifyPlayback(homePlayerSnapshot);
-        if (spotifyPlayback && homePlayerSnapshot.spotifyTrackUri != null) {
+        if (spotifyPlayback) {
             addNowPlayingMenuRow(rows, popup, R.drawable.ic_folder,
                     R.string.spotify_playlist_add_track,
                     () -> showSpotifyAddToPlaylistPopup(anchor));
@@ -2830,7 +3345,8 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         String provider = LyricsProvider.selected(
                 getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE));
         if (LyricsProvider.PLAYER.equals(provider)) {
-            if (snapshot.lyrics == null || snapshot.lyrics.trim().isEmpty()) {
+            if (localizedPlayerLyrics(snapshot.lyrics) == null
+                    || localizedPlayerLyrics(snapshot.lyrics).trim().isEmpty()) {
                 showLyricsMessage(getString(R.string.now_playing_lyrics_unavailable));
             } else {
                 setHomePlayerExpanded(true);
@@ -3208,12 +3724,67 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
 
     private void showSpotifyAddToPlaylistPopup(View anchor) {
         NowPlayingListener.Snapshot snapshot = homePlayerSnapshot;
-        if (snapshot == null || snapshot.spotifyTrackUri == null) {
+        if (snapshot == null || !NowPlayingListener.isSpotifyPlayback(snapshot)) {
             Toast.makeText(this, R.string.spotify_playlist_track_unavailable,
                     Toast.LENGTH_LONG).show();
             return;
         }
-        showSpotifyPlaylistPopup(anchor, snapshot.spotifyTrackUri);
+        if (snapshot.spotifyTrackUri != null) {
+            showSpotifyPlaylistPopup(anchor, snapshot.spotifyTrackUri);
+            return;
+        }
+        if (spotifyPlaybackExecutor == null || spotifyPlaybackExecutor.isShutdown()) {
+            Toast.makeText(this, R.string.spotify_playlist_track_unavailable,
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String requestedTrackKey = homePlayerSeekTrackKey(snapshot);
+        SpotifyRemotePlayback client = new SpotifyRemotePlayback(getApplicationContext());
+        Toast.makeText(this, R.string.loading_please_wait, Toast.LENGTH_SHORT).show();
+        spotifyPlaybackExecutor.execute(() -> {
+            SpotifyConnectClient.Playback playback = null;
+            Exception failure = null;
+            try {
+                playback = client.currentPlayback();
+            } catch (GeneralSecurityException | org.json.JSONException
+                     | java.io.IOException exception) {
+                failure = exception;
+            }
+            SpotifyConnectClient.Playback currentPlayback = playback;
+            Exception requestFailure = failure;
+            handler.post(() -> {
+                if (!homeResumed || isFinishing() || isDestroyed()) return;
+                if (requestFailure != null) {
+                    android.util.Log.w("AppleTv.SpotifyPlayback",
+                            "Could not resolve the current Spotify track for a playlist", requestFailure);
+                    Toast.makeText(this, R.string.spotify_playlist_track_unavailable,
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+                NowPlayingListener.Snapshot current = homePlayerSnapshot;
+                if (current == null || !NowPlayingListener.isSpotifyPlayback(current)
+                        || !Objects.equals(requestedTrackKey, homePlayerSeekTrackKey(current))) {
+                    Toast.makeText(this, R.string.spotify_playlist_track_unavailable,
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+                String trackUri = current.spotifyTrackUri;
+                if (trackUri == null && currentPlayback != null) {
+                    NowPlayingListener.Snapshot remoteSnapshot =
+                            SpotifyRemotePlayback.snapshot(currentPlayback, null);
+                    if (NowPlayingListener.isSameSpotifyTrack(current, remoteSnapshot)) {
+                        trackUri = currentPlayback.trackUri;
+                    }
+                }
+                if (trackUri == null) {
+                    Toast.makeText(this, R.string.spotify_playlist_track_unavailable,
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+                showSpotifyPlaylistPopup(anchor, trackUri);
+            });
+        });
     }
 
     private void showSpotifyPlaylistPopup(View anchor, String trackUri) {
@@ -4412,17 +4983,8 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     private boolean isTopBarButton(View view) {
         if (view == null) return false;
         int id = view.getId();
-        return id == R.id.btnStore || id == R.id.btnInputs || id == R.id.btnWifi
+        return id == R.id.btnInputs || id == R.id.btnWifi
                 || id == R.id.btnRecentApps || id == R.id.btnSettings || id == R.id.btnPower;
-    }
-
-    private void openAppStore() {
-        Intent launch = AppStoreLauncher.launchIntent(this);
-        if (launch == null) {
-            Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
-        } else {
-            open(launch);
-        }
     }
 
     private void openRecentApps() {
@@ -4485,7 +5047,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
                     continueShelfCards.getChildAt(0).requestFocus();
                     return true;
                 }
-                (getResources().getBoolean(R.bool.rtl_menu_bar) ? btnPower : btnStore)
+                (getResources().getBoolean(R.bool.rtl_menu_bar) ? btnPower : btnRecentApps)
                         .requestFocus();
                 return true;
             }
@@ -4628,7 +5190,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
                     return true;
                 }
                 if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                    btnStore.requestFocus();
+                    btnRecentApps.requestFocus();
                     return true;
                 }
                 return false;
@@ -4671,7 +5233,7 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
     private void focusTile(int position) {
         int itemCount = adapter.getItemCount();
         if (itemCount == 0) {
-            btnStore.requestFocus();
+            btnRecentApps.requestFocus();
             return;
         }
         int requestedPosition = Math.max(0, Math.min(position, itemCount - 1));
@@ -4725,13 +5287,17 @@ public class MainActivity extends LauncherActivity implements AppAdapter.TileLis
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         int res = greetingResourceForHour(hour);
         String festiveGreeting = festive ? festival.greetingText() : "";
+        int color;
         if (!festiveGreeting.isEmpty()) {
             greeting.setText(festiveGreeting);
-            greeting.setTextColor(liftTowardsWhite(festival.accentColor(), 0.25f));
+            color = liftTowardsWhite(festival.accentColor(), 0.25f);
         } else {
             greeting.setText(res);
-            greeting.setTextColor(greetingColor);
+            color = greetingColor;
         }
+        greeting.setTextColor(color);
+        ((TextView) findViewById(R.id.date)).setTextColor(color);
+        if (shamsiDate != null) shamsiDate.setTextColor(color);
         if (shamsi) shamsiDate.setText(Shamsi.today());
     }
 
